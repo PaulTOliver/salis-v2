@@ -814,7 +814,7 @@ class Printer:
 		# Now, iterate all living processes and try to find one that owns the
 		# calculated address.
 		if self._sim.lib.sal_mem_is_address_valid(address):
-			for proc_id in range(self._sim.lib.sal_proc_get_count()):
+			for proc_id in range(self._sim.lib.sal_proc_get_capacity()):
 				if not self._sim.lib.sal_proc_is_free(proc_id):
 					proc_data = (c_uint32 * len(self._proc_elements))()
 					self._sim.lib.sal_proc_get_proc_data(proc_id, cast(
