@@ -1286,7 +1286,13 @@ static boolean eat_seek(uint32 pidx, boolean forward)
 		return FALSE;
 	}
 
-	if (g_procs[pidx].sp == next_addr) {
+	/* Processes may only eat code copies from memory areas that are either
+	deallocated or owned by them (i.e. writeable).
+	*/
+	if (
+		!is_writeable_by(pidx, g_procs[pidx].sp) ||
+		g_procs[pidx].sp == next_addr
+	) {
 		increment_sp(pidx, forward);
 		return FALSE;
 	}
@@ -1313,7 +1319,8 @@ static void eat(uint32 pidx)
 
 	However, whenever an organism eats, the detected copy of the source code
 	gets destroyed (randomized). The main idea of the EAT instruction is to
-	turn 'information' into a valuable resource in Salis.
+	turn 'information' into a valuable resource in Salis. Organisms,
+	nonetheless, may only eat information which they have 'write' access to.
 	*/
 	uint32 source;
 	uint32 target;
