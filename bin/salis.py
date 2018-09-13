@@ -36,28 +36,32 @@ class Salis:
 		and parsed with the 'argparse' module. Library is loaded with 'CDLL'
 		and C headers are parsed to detect function argument and return types.
 		"""
-		self._path = self._get_path()
-		self._args = self._parse_args()
-		self._log = self._open_log_file()
-		self._save_file_path = self._get_save_file_path()
-		self._common_pipe = self._get_common_pipe()
-		self._lib = self._parse_lib()
-		self._printer = Printer(self)
-		self._handler = Handler(self)
-		self._state = "paused"
-		self._autosave = "---"
-		self._exit = False
+		# Before declaring any other privates, let's define the absolute path
+		# and parse CLI arguments.
+		self.path = self.__get_path()
+		self.args = self.__parse_args()
+
+		# Now we can declare all other public and private members.
+		self.__log = self.__open_log_file()
+		self.__exit = False
+		self.save_file_path = self.__get_save_file_path()
+		self.common_pipe = self.__get_common_pipe()
+		self.lib = self.__parse_lib()
+		self.printer = Printer(self)
+		self.handler = Handler(self)
+		self.state = "paused"
+		self.autosave = "---"
 
 		# Based on CLI arguments, initialize a new Salis simulation or load
 		# existing one from file.
-		if self._args.action == "new":
-			self._lib.sal_main_init(
-				self._args.order, self._common_pipe.encode("utf-8")
+		if self.args.action == "new":
+			self.lib.sal_main_init(
+				self.args.order, self.common_pipe.encode("utf-8")
 			)
-		elif self._args.action == "load":
-			self._lib.sal_main_load(
-				self._save_file_path.encode("utf-8"),
-				self._common_pipe.encode("utf-8")
+		elif self.args.action == "load":
+			self.lib.sal_main_load(
+				self.save_file_path.encode("utf-8"),
+				self.common_pipe.encode("utf-8")
 			)
 
 	def __del__(self):
@@ -66,62 +70,62 @@ class Salis:
 		# In case an error occurred early during initialization, checks whether
 		# Salis has been initialized correctly before attempting to shut it
 		# down.
-		if hasattr(self, "_lib") and hasattr(self._lib, "sal_main_quit"):
-			if self._lib.sal_main_is_init():
-				self._lib.sal_main_quit()
+		if hasattr(self, "_lib") and hasattr(self.lib, "sal_main_quit"):
+			if self.lib.sal_main_is_init():
+				self.lib.sal_main_quit()
 
 		# If simulation ended correctly, 'error.log' should be empty. Delete
 		# file it exists and its empty.
 		if (
 			hasattr(self, "_log") and
-			os.path.isfile(self._log) and
-			os.stat(self._log).st_size == 0
+			os.path.isfile(self.__log) and
+			os.stat(self.__log).st_size == 0
 		):
-			os.remove(self._log)
+			os.remove(self.__log)
 
 	def run(self):
 		""" Runs main simulation loop. Curses may be placed on non-blocking
 		mode, which allows simulation to run freely while still listening to
 		user input.
 		"""
-		while not self._exit:
-			self._printer.print_page()
-			self._handler.process_cmd(self._printer.get_cmd())
+		while not self.__exit:
+			self.printer.print_page()
+			self.handler.process_cmd(self.printer.get_cmd())
 
 			# If in non-blocking mode, re-print data once every 15
 			# milliseconds.
-			if self._state == "running":
+			if self.state == "running":
 				end = time.time() + 0.015
 
 				while time.time() < end:
-					self._lib.sal_main_cycle()
+					self.lib.sal_main_cycle()
 					self.check_autosave()
 
 	def toggle_state(self):
 		""" Toggle between 'paused' and 'running' states. On 'running' curses
 		gets placed in non-blocking mode.
 		"""
-		if self._state == "paused":
-			self._state = "running"
-			self._printer.set_nodelay(True)
+		if self.state == "paused":
+			self.state = "running"
+			self.printer.set_nodelay(True)
 		else:
-			self._state = "paused"
-			self._printer.set_nodelay(False)
+			self.state = "paused"
+			self.printer.set_nodelay(False)
 
 	def rename(self, new_name):
 		""" Give the simulation a new name.
 		"""
-		self._args.file = new_name
-		self._save_file_path = self._get_save_file_path()
+		self.args.file = new_name
+		self.save_file_path = self.__get_save_file_path()
 
 	def set_autosave(self, interval):
 		""" Set the simulation's auto-save interval. When set to zero, auto
 		saving is disabled,
 		"""
 		if not interval:
-			self._autosave = "---"
+			self.autosave = "---"
 		else:
-			self._autosave = interval
+			self.autosave = interval
 
 	def check_autosave(self):
 		""" Save simulation to './sims/auto/*' whenever the autosave interval
@@ -129,76 +133,40 @@ class Salis:
 
 		>>> ./sims/auto/<file-name>.<sim-epoch>.<sim-cycle>.auto
 		"""
-		if self._autosave != "---":
-			if not self._lib.sal_main_get_cycle() % self._autosave:
-				auto_path = os.path.join(self._path, "sims/auto", ".".join([
-					self._args.file,
-					"{:08x}".format(self._lib.sal_main_get_epoch()),
-					"{:08x}".format(self._lib.sal_main_get_cycle()),
+		if self.autosave != "---":
+			if not self.lib.sal_main_get_cycle() % self.autosave:
+				auto_path = os.path.join(self.path, "sims/auto", ".".join([
+					self.args.file,
+					"{:08x}".format(self.lib.sal_main_get_epoch()),
+					"{:08x}".format(self.lib.sal_main_get_cycle()),
 					"auto"
 				]))
-				self._lib.sal_main_save(auto_path.encode("utf-8"))
+				self.lib.sal_main_save(auto_path.encode("utf-8"))
 
 	def exit(self):
 		""" Signal we want to exit the simulator.
 		"""
-		self._exit = True
+		self.__exit = True
 
-	@property
-	def path(self):
-		return self._path
-
-	@property
-	def save_file_path(self):
-		return self._save_file_path
-
-	@property
-	def common_pipe(self):
-		return self._common_pipe
-
-	@property
-	def args(self):
-		return self._args
-
-	@property
-	def lib(self):
-		return self._lib
-
-	@property
-	def printer(self):
-		return self._printer
-
-	@property
-	def handler(self):
-		return self._handler
-
-	@property
-	def state(self):
-		return self._state
-
-	@property
-	def autosave(self):
-		return self._autosave
-
-	def _get_path(self):
+	def __get_path(self):
 		""" Retrieve the absolute path of this script. We need to do this in
 		order to detect the './lib', './sims' and './genomes' subdirectories.
 		"""
 		return os.path.dirname(__file__)
 
-	def _get_save_file_path(self):
+	def __get_save_file_path(self):
 		""" Retrieve the absolute path of the file to which we will save this
 		simulation when we exit Salis.
 		"""
-		return os.path.join(self._path, "sims", self._args.file)
+		return os.path.join(self.path, "sims", self.args.file)
 
-	def _get_common_pipe(self):
+	def __get_common_pipe(self):
 		""" Get absolute path of the common pipe. This FIFO object may be used
 		by concurrent Salis simulations to share data between themselves.
 		"""
-		return os.path.join(self._path, "common/pipe")
+		return os.path.join(self.path, "common/pipe")
 
-	def _parse_args(self):
+	def __parse_args(self):
 		""" Parse command-line arguments with the 'argparse' module. To learn
 		more about each command, invoke the simulator in one of the following
 		ways:
@@ -253,7 +221,7 @@ class Salis:
 			if args.order not in range(1, 32):
 				parser.error("Order must be an integer between 1 and 31")
 		else:
-			savefile = os.path.join(self._path, "sims", args.file)
+			savefile = os.path.join(self.path, "sims", args.file)
 
 			# No save-file with given name has been detected.
 			if not os.path.isfile(savefile):
@@ -263,15 +231,15 @@ class Salis:
 
 		return args
 
-	def _open_log_file(self):
+	def __open_log_file(self):
 		""" Create a log file to store errors on. It will get deleted if no
 		errors are detected.
 		"""
-		log_file = os.path.join(self._path, "error.log")
+		log_file = os.path.join(self.path, "error.log")
 		sys.stderr = open(log_file, 'w')
 		return log_file
 
-	def _parse_lib(self):
+	def __parse_lib(self):
 		""" Dynamically parse the Salis library C header files. We do this in
 		order to more easily set the correct input/output types of all loaded
 		functions. C functions to be parsed must be declared in a '.h' file
@@ -282,8 +250,8 @@ class Salis:
 		Note to developers: the 'SALIS_API' keyword should *NOT* be used
 		anywhere else in the header files (not even in comments)!
 		"""
-		lib = CDLL(os.path.join(self._path, "lib/libsalis.so"))
-		include_dir = os.path.join(self._path, "../include")
+		lib = CDLL(os.path.join(self.path, "lib/libsalis.so"))
+		include_dir = os.path.join(self.path, "../include")
 		c_includes = [
 			os.path.join(include_dir, f)
 			for f in os.listdir(include_dir)
