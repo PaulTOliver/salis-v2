@@ -37,8 +37,9 @@ class Salis:
 		and parsed with the 'argparse' module. Library is loaded with 'CDLL'
 		and C headers are parsed to detect function argument and return types.
 		"""
-		# Before declaring any other privates, let's define the absolute path
-		# and parse CLI arguments.
+		# Before declaring any other privates, let's define the autosave
+		# member, get the absolute path and parse CLI arguments.
+		self.autosave = "---"
 		self.path = self.__get_path()
 		self.args = self.__parse_args()
 
@@ -51,7 +52,6 @@ class Salis:
 		self.printer = Printer(self)
 		self.handler = Handler(self)
 		self.state = "paused"
-		self.autosave = "---"
 
 		# Based on CLI arguments, initialize a new Salis simulation or load
 		# existing one from file.
@@ -208,12 +208,20 @@ class Salis:
 			"-f", "--file", required=True, type=str, metavar="FILE",
 			help="Name of FILE to save simulation to on exit"
 		)
+		new_parser.add_argument(
+			"-a", "--auto", required=False, type=lambda x: int(x, 0),
+			metavar="INT", help="Auto-save interval for the new simulation"
+		)
 
 		# Set up subparser for the 'load' existing action.
 		load_parser = subparsers.add_parser("load", formatter_class=formatter)
 		load_parser.add_argument(
 			"-f", "--file", required=True, type=str, metavar="FILE",
 			help="Load previously saved simulation from FILE"
+		)
+		load_parser.add_argument(
+			"-a", "--auto", required=False, type=lambda x: int(x, 0),
+			metavar="INT", help="Auto-save interval for the loaded simulation"
 		)
 
 		# Finally, parse all arguments.
@@ -231,6 +239,11 @@ class Salis:
 				parser.error(
 					"Save file provided '{}' does not exist".format(savefile)
 				)
+
+		# Set autosave interval, if given.
+		#if args.auto:
+		if args.auto:
+			self.set_autosave(args.auto)
 
 		return args
 
