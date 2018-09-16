@@ -138,6 +138,8 @@ $ ./bin/salis.py new --order 16 --file 16.sim
 $ ./bin/salis.py load --file 16.sim
 ```
 
+Look at README file inside the `./bin` directory for a full list of commands.
+
 ### New features on Salis-2.0
 - Tierran templates are now used instead of keys/lock pairs
 - The instruction set is shorter
