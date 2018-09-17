@@ -617,8 +617,8 @@ class Printer:
 		ypos += 1
 		proc_id = self.proc_list_scroll
 
-		# Print all proc elements in decimal or hexadecimal format, depending
-		# on hex-flag being set.
+		# Print all proc IDs and elements in decimal or hexadecimal format,
+		# depending on hex-flag being set.
 		if self.__print_hex:
 			data_format = lambda x: hex(x)
 		else:
@@ -644,7 +644,7 @@ class Printer:
 				)
 
 				# Lastly, assemble and print the next table row.
-				row = " | ".join(["{:<10}".format(proc_id)] + [
+				row = " | ".join(["{:<10}".format(data_format(proc_id))] + [
 					"{:>10}".format(data_format(element))
 					for element in proc_data[self.__proc_element_scroll:]
 				])
@@ -732,12 +732,19 @@ class Printer:
 		between printing the genomes or the data elements by pressing the 'g'
 		key.
 		"""
+		# Print all proc IDs and gene scroll in decimal or hexadecimal format,
+		# depending on hex-flag being set.
+		if self.__print_hex:
+			data_format = lambda x: hex(x)
+		else:
+			data_format = lambda x: x
+
 		# First, print the table header. We print the current gene-scroll
 		# position for easy reference. Return back to zero scroll with the 'A'
 		# key.
 		ypos = len(self.__main) + len(self.__pages["PROCESS"]) + 5
 		header = "{:<10} | genes {} -->".format(
-			"pidx", self.__proc_gene_scroll
+			"pidx", data_format(self.__proc_gene_scroll)
 		)
 		self.__clear_line(ypos)
 		self.__print_header(ypos, header)
@@ -757,7 +764,7 @@ class Printer:
 					attr = curses.A_NORMAL
 
 				# Assemble and print the next table row.
-				row = "{:<10} |".format(proc_id)
+				row = "{:<10} |".format(data_format(proc_id))
 				self.__print_line(ypos, row, attr)
 				self.__print_proc_gene(ypos, proc_id)
 
