@@ -32,6 +32,8 @@ enum {
 	SALIS_INST SPLT, /**< $ Split child memory block */
 	SALIS_INST INCN, /**< ^ Increment register */
 	SALIS_INST DECN, /**< v Decrement register */
+	SALIS_INST SHFL, /**< < Shift-left register */
+	SALIS_INST SHFR, /**< > Shift-right register */
 	SALIS_INST ZERO, /**< 0 Zero out register */
 	SALIS_INST UNIT, /**< 1 Place 1 on register */
 	SALIS_INST NOTN, /**< ! Negation operator */
@@ -45,9 +47,7 @@ enum {
 	SALIS_INST SEND, /**< S Send instruction to common pipe */
 	SALIS_INST RECV, /**< R Receive instruction from common pipe */
 	SALIS_INST PSHN, /**< # Push value to stack */
-	SALIS_INST POPN, /**< ~ Pop value from stack */
-	SALIS_INST EATB, /**< < Eat backwards */
-	SALIS_INST EATF  /**< > Eat forward */
+	SALIS_INST POPN  /**< ~ Pop value from stack */
 };
 
 /** Determine if an unsigned integer contains a valid instruction.

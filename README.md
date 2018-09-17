@@ -16,7 +16,8 @@ the addition of a seeker pointer to all organisms.
 The seeker pointer (SP) is an attempt to bring extra spatial and temporal
 coherence to the simulation. Allocation, reads and writes will take more time
 when done between addresses that are far away, as a consequence of the SP
-having to travel those distances at a constant speed.
+having to travel those distances at a speed of 1 byte per simulation cycle
+(SALIS' speed-of-light if you will).
 
 To watch an introductory video about SALIS (v1.0)
 [go here.](https://www.youtube.com/watch?v=jCFmOCvy6po)
@@ -30,8 +31,6 @@ the following elements:
 - One or two associated memory blocks
 - One instruction pointer
 - One seeker pointer
-- One reward pointer
-- One punishment pointer
 - 4 general-purpose registers
 - A stack of 8 values
 
@@ -49,8 +48,6 @@ mutation scheme is enough to allow evolution by natural selection to occur.
 SALIS' organisms read a simple language similar to ASM. This language
 consists of 32 instructions, each with an associated name and symbol. Whenever
 an organism performs an invalid instruction it is considered a *fault*.
-When a *fault* is committed by any organism it gets punished, and stops its
-execution during a full simulation cycle.
 
 ### Faults may be caused by:
 - Not having enough register modifiers located after the current instruction
@@ -60,13 +57,6 @@ execution during a full simulation cycle.
 - SP being on address non-adjacent to child memory block, while allocating
 - Swapping or splitting when not owning 2 memory blocks
 - Dividing by zero
-- Attempting to eat from an allocated (but not owned) or invalid address
-
-### Entropy
-SALIS-2.0 introduces the EAT instruction and the concept of entropy.
-Organisms may now 'consume' information (in the form of instructions) and trade
-them for extra execution speed. When eaten, information gets destroyed
-(randomized).
 
 ### The Common Pipe
 The common pipe is a mechanism through which different SALIS simulations can
@@ -93,6 +83,8 @@ to/from this common pipe via the SEND/RCVE instructions.
 |`SPLT` |`$` |0 |Split child memory block |
 |`INCN` |`^` |1 |Increment register |
 |`DECN` |`v` |1 |Decrement register |
+|`SHFL` |`<` |1 |Shift-left register |
+|`SHFR` |`>` |1 |Shift-right register |
 |`ZERO` |`0` |1 |Zero out register |
 |`UNIT` |`1` |1 |Place 1 on register |
 |`NOTN` |`!` |1 |Negation operator |
@@ -107,8 +99,6 @@ to/from this common pipe via the SEND/RCVE instructions.
 |`RECV` |`R` |1 |Receive instruction from common pipe |
 |`PSHN` |`#` |1 |Push value to stack |
 |`POPN` |`~` |1 |Pop value from stack |
-|`EATB` |`<` |0 |Eat backwards |
-|`EATF` |`>` |0 |Eat forward |
 
 Instructions with arguments *must* be followed by a minimum number of register
 modifiers equal to the instruction's parameters. Otherwise the instruction will
@@ -147,9 +137,6 @@ Look at README file inside the `./bin` directory for a full list of commands.
 - Tierran templates are now used instead of keys/lock pairs
 - The instruction set is shorter
 - Organisms can send/receive instructions to/from a common pipe
-- Organisms can "eat" information
-- Organisms are rewarded for eating
-- Organisms are punished on faults
 
 ### Python integration
 - Salis controller/viewer is now written in python 3

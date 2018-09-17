@@ -4,8 +4,7 @@
 *
 * This module controls all random events in Salis. At its heart lies a
 * XOR-Shift pseudo-random number generator with 128 bits of state. It controls
-* cosmic rays and rises simulation entropy whenever organisms 'eat'
-* information.
+* cosmic rays and slowly rises simulation entropy.
 */
 
 #ifndef SALIS_EVOLVER_H
