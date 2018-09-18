@@ -24,6 +24,7 @@ class World:
 		self.__printer = printer
 		self.__sim = sim
 		self.__set_world_colors()
+		self.__show_ip = True
 		self.pos = 0
 		self.zoom = 1
 
@@ -139,6 +140,13 @@ class World:
 			else:
 				raise RuntimeError("Error: scrolling to an invalid address")
 
+	def toggle_ip_view(self):
+		""" Turn on/off IP visualization. Turning off IPs might make it easier
+		to visualize the underlying memory block structure.
+		"""
+		if self.__is_world_editable():
+			self.__show_ip = not self.__show_ip
+
 	def __set_world_colors(self):
 		""" Define color pairs for rendering the world. Each color has a
 		special meaning, referring to the selected process IP, SP and memory
@@ -196,11 +204,11 @@ class World:
 
 		# No pair has been selected yet; select pair based on bit-flags.
 		if not "pair" in locals():
-			if byte >= 0x80:
+			if self.__show_ip and byte >= 0x80:
 				pair = self.pair_ip
-			elif byte >= 0x40:
+			elif (byte % 0x80) >= 0x40:
 				pair = self.pair_mbstart
-			elif byte >= 0x20:
+			elif (byte % 0x40) >= 0x20:
 				pair = self.pair_alloc
 			else:
 				pair = self.pair_free

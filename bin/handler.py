@@ -94,6 +94,8 @@ class Handler:
 			self.__printer.proc_scroll_to_selected()
 		elif cmd == ord("g"):
 			self.__printer.proc_toggle_gene_view()
+		elif cmd == ord("i"):
+			self.__printer.world.toggle_ip_view()
 		elif cmd == ord("\n"):
 			self.__printer.run_cursor()
 		elif cmd == ord("c"):
