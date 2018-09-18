@@ -15,7 +15,6 @@ static uint32 g_count;
 static uint32 g_capacity;
 static uint32 g_first;
 static uint32 g_last;
-static uint32 g_instructions_executed;
 static Process *g_procs;
 
 void _sal_proc_init(void)
@@ -45,7 +44,6 @@ void _sal_proc_quit(void)
 	g_capacity = 0;
 	g_first = 0;
 	g_last = 0;
-	g_instructions_executed = 0;
 	g_procs = NULL;
 }
 
@@ -60,7 +58,6 @@ void _sal_proc_load_from(FILE *file)
 	fread(&g_capacity, sizeof(uint32), 1, file);
 	fread(&g_first, sizeof(uint32), 1, file);
 	fread(&g_last, sizeof(uint32), 1, file);
-	fread(&g_instructions_executed, sizeof(uint32), 1, file);
 	g_procs = calloc(g_capacity, sizeof(Process));
 	assert(g_procs);
 	fread(g_procs, sizeof(Process), g_capacity, file);
@@ -77,7 +74,6 @@ void _sal_proc_save_into(FILE *file)
 	fwrite(&g_capacity, sizeof(uint32), 1, file);
 	fwrite(&g_first, sizeof(uint32), 1, file);
 	fwrite(&g_last, sizeof(uint32), 1, file);
-	fwrite(&g_instructions_executed, sizeof(uint32), 1, file);
 	fwrite(g_procs, sizeof(Process), g_capacity, file);
 }
 
@@ -87,7 +83,6 @@ UINT32_GETTER(proc, count)
 UINT32_GETTER(proc, capacity)
 UINT32_GETTER(proc, first)
 UINT32_GETTER(proc, last)
-UINT32_GETTER(proc, instructions_executed)
 
 boolean sal_proc_is_free(uint32 proc_id)
 {
@@ -1280,9 +1275,7 @@ static void proc_cycle(uint32 pidx)
 	assert(g_is_init);
 	assert(pidx < g_capacity);
 	assert(!sal_proc_is_free(pidx));
-
 	inst = sal_mem_get_inst(g_procs[pidx].ip);
-	g_instructions_executed++;
 
 	switch (inst) {
 	case JMPB:
@@ -1357,7 +1350,6 @@ void _sal_proc_cycle(void)
 	*/
 	assert(g_is_init);
 	assert(module_is_valid());
-	g_instructions_executed = 0;
 
 	/* Iterate through all organisms in the reaper queue. First organism to
 	execute is the one pointed to by 'g_last' (the one on top of the queue).
