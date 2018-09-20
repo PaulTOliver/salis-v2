@@ -25,8 +25,6 @@ import curses
 
 
 class Handler:
-	ESCAPE_KEY = 27
-
 	def __init__(self, sim):
 		""" Handler constructor. Simply link this class to the main simulation
 		class and printer class and create symbol dictionary.
@@ -41,12 +39,7 @@ class Handler:
 		ncurses' getch() function, thus, they must be transformed into their
 		character representations with 'ord()'.
 		"""
-		if cmd == self.ESCAPE_KEY:
-			self.__sim.lib.sal_main_save(
-				self.__sim.save_file_path.encode("utf-8")
-			)
-			self.__sim.exit()
-		elif cmd == ord(" "):
+		if cmd == ord(" "):
 			self.__sim.toggle_state()
 		elif cmd == curses.KEY_LEFT:
 			self.__printer.flip_page(-1)
