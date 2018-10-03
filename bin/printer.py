@@ -677,7 +677,7 @@ class Printer:
 			# Curses raises an exception each time we print on the screen's
 			# edge. We can just catch and ignore it.
 			try:
-				self.screen.addch(ypos, xpos, symb, attr)
+				self.screen.addstr(ypos, xpos, symb, attr)
 			except curses.error:
 				pass
 
