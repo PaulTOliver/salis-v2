@@ -1,0 +1,10 @@
+# Top-most EditorConfig file
+root = true
+
+# Apply to all file types
+[*]
+end_of_line = lf
+charset = utf-8
+indent_style = tabs
+indent_size = 4
+rulers = 80
