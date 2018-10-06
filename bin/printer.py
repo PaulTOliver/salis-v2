@@ -659,7 +659,7 @@ class Printer:
 		""" Print a sub-set of a process genome. Namely, on of its two memory
 		blocks.
 		"""
-		while gidx < mbs and xpos < curses.COLS:
+		while gidx < mbs and xpos < self.size[1]:
 			gaddr = mba + gidx
 
 			if gaddr == ip:
