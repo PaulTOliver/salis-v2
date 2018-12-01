@@ -245,8 +245,7 @@ static uint32 get_new_proc_from_queue(uint32 queue_lock)
 }
 
 static void proc_create(
-	uint32 address, uint32 size, uint32 queue_lock,
-	boolean set_ip, boolean allocate
+	uint32 address, uint32 size, uint32 queue_lock, boolean allocate
 ) {
 	/* Give birth to a new process! We must specify the address and size of the
 	new organism.
@@ -255,15 +254,6 @@ static void proc_create(
 	assert(g_is_init);
 	assert(sal_mem_is_address_valid(address));
 	assert(sal_mem_is_address_valid(address + size - 1));
-
-	/* When organisms are generated manually (by an user), we must set the IP
-	flag on the first byte of its owned memory. When organisms replicate by
-	themselves, we don't set the flag, as it gets set at the end of the module
-	cycle. Take a look at the '_sal_proc_cycle()' function for more info.
-	*/
-	if (set_ip) {
-		_sal_mem_set_ip(address);
-	}
 
 	/* When organisms are generated manually (by an user), we must explicitly
 	allocate its entire memory block. When organisms replicate by themselves,
@@ -298,7 +288,7 @@ void sal_proc_create(uint32 address, uint32 mb1s)
 	*/
 	assert(g_is_init);
 	assert(block_is_free_and_valid(address, mb1s));
-	proc_create(address, mb1s, 0, TRUE, TRUE);
+	proc_create(address, mb1s, 0, TRUE);
 }
 
 static void free_memory_block(uint32 address, uint32 size)
@@ -339,7 +329,7 @@ static void free_memory_owned_by(uint32 pidx)
 	}
 }
 
-static void proc_kill(boolean reset_ips)
+static void proc_kill(void)
 {
 	/* Kill process on bottom of reaper queue (the oldest process).
 	*/
@@ -348,13 +338,6 @@ static void proc_kill(boolean reset_ips)
 	assert(g_first != UINT32_MAX);
 	assert(g_last != UINT32_MAX);
 	assert(!sal_proc_is_free(g_first));
-
-	/* When called manually by an user, we must clear and reset the IP flags of
-	all processes in order to preserve module validity.
-	*/
-	if (reset_ips) {
-		_sal_mem_unset_ip(g_procs[g_first].ip);
-	}
 
 	/* Free up owned memory and reset process data structure back to zero.
 	*/
@@ -369,19 +352,6 @@ static void proc_kill(boolean reset_ips)
 		g_first++;
 		g_first %= g_capacity;
 	}
-
-	/* Reset IP flags of all living processes. We use openmp to do this faster.
-	*/
-	if (reset_ips) {
-		uint32 pidx;
-
-		#pragma omp parallel for
-		for (pidx = 0; pidx < g_capacity; pidx++) {
-			if (!sal_proc_is_free(pidx)) {
-				_sal_mem_set_ip(g_procs[pidx].ip);
-			}
-		}
-	}
 }
 
 void sal_proc_kill(void)
@@ -394,7 +364,7 @@ void sal_proc_kill(void)
 	assert(g_first != UINT32_MAX);
 	assert(g_last != UINT32_MAX);
 	assert(!sal_proc_is_free(g_first));
-	proc_kill(TRUE);
+	proc_kill();
 }
 
 static boolean block_is_allocated(uint32 address, uint32 size)
@@ -426,7 +396,6 @@ static boolean proc_is_valid(uint32 pidx)
 		assert(sal_mem_is_address_valid(g_procs[pidx].ip));
 		assert(sal_mem_is_address_valid(g_procs[pidx].sp));
 		assert(sal_mem_is_block_start(g_procs[pidx].mb1a));
-		assert(sal_mem_is_ip(g_procs[pidx].ip));
 		assert(block_is_allocated(g_procs[pidx].mb1a, g_procs[pidx].mb1s));
 
 		if (g_procs[pidx].mb2s) {
@@ -449,7 +418,6 @@ static boolean module_is_valid(void)
 	uint32 alloc_count = 0;
 	uint32 block_count = 0;
 	assert(g_is_init);
-	assert(g_count >= sal_mem_get_ip_count());
 
 	/* Check that each individual process is in a valid state. We can do this
 	in a multi-threaded way.
@@ -479,28 +447,6 @@ static boolean module_is_valid(void)
 	assert(block_count == sal_mem_get_block_start_count());
 	assert(alloc_count == sal_mem_get_allocated_count());
 	return TRUE;
-}
-
-static void toggle_ip_flag(void (*toggler)(uint32 address))
-{
-	/* At the start of each process module cycle, all memory addresses with the
-	IP flag set get their IP flag turned off. Once all processes finish
-	executing, the IP flags are turned on again on all addresses pointed by
-	'g_procs[pidx].ip'. I've found this is the easiest way to preserve
-	correctness, given that more than one process can have their IPs pointed to
-	the same address.
-
-	This function simply iterates through all processes, setting the IP flag on
-	or off on the address pointed to by their IP.
-	*/
-	uint32 pidx;
-	assert(g_is_init);
-
-	for (pidx = 0; pidx < g_capacity; pidx++) {
-		if (!sal_proc_is_free(pidx)) {
-			toggler(g_procs[pidx].ip);
-		}
-	}
 }
 
 static void on_fault(uint32 pidx)
@@ -952,9 +898,7 @@ static void split(uint32 pidx)
 	assert(!sal_proc_is_free(pidx));
 
 	if (g_procs[pidx].mb2s) {
-		proc_create(
-			g_procs[pidx].mb2a, g_procs[pidx].mb2s, pidx, FALSE, FALSE
-		);
+		proc_create(g_procs[pidx].mb2a, g_procs[pidx].mb2s, pidx, FALSE);
 		g_procs[pidx].mb2a = 0;
 		g_procs[pidx].mb2s = 0;
 	} else {
@@ -1358,12 +1302,6 @@ void _sal_proc_cycle(void)
 	*/
 	if (g_count) {
 		uint32 pidx = g_last;
-
-		/* Turn off all IP flags in memory and cycle 'g_last'. Then, continue
-		with all other organisms until we reach 'g_first'.
-		*/
-		toggle_ip_flag(_sal_mem_unset_ip);
-		assert(!sal_mem_get_ip_count());
 		proc_cycle(pidx);
 
 		while (pidx != g_first) {
@@ -1375,12 +1313,7 @@ void _sal_proc_cycle(void)
 		/* Kill oldest processes whenever memory gets filled over capacity.
 		*/
 		while (sal_mem_get_allocated_count() > sal_mem_get_capacity()) {
-			proc_kill(FALSE);
+			proc_kill();
 		}
-
-		/* Finally, turn IP flags back on. Keep in mind that IP flags exist
-		for visualization purposes only. They are actually not really needed.
-		*/
-		toggle_ip_flag(_sal_mem_set_ip);
 	}
 }

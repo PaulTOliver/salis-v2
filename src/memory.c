@@ -12,7 +12,6 @@
 static boolean g_is_init;
 static uint32 g_order;
 static uint32 g_size;
-static uint32 g_ip_count;
 static uint32 g_block_start_count;
 static uint32 g_allocated_count;
 static uint32 g_capacity;
@@ -46,7 +45,6 @@ void _sal_mem_quit(void)
 	g_is_init = FALSE;
 	g_order = 0;
 	g_size = 0;
-	g_ip_count = 0;
 	g_block_start_count = 0;
 	g_allocated_count = 0;
 	g_capacity = 0;
@@ -63,7 +61,6 @@ void _sal_mem_load_from(FILE *file)
 	fread(&g_is_init, sizeof(boolean), 1, file);
 	fread(&g_order, sizeof(uint32), 1, file);
 	fread(&g_size, sizeof(uint32), 1, file);
-	fread(&g_ip_count, sizeof(uint32), 1, file);
 	fread(&g_block_start_count, sizeof(uint32), 1, file);
 	fread(&g_allocated_count, sizeof(uint32), 1, file);
 	fread(&g_capacity, sizeof(uint32), 1, file);
@@ -82,7 +79,6 @@ void _sal_mem_save_into(FILE *file)
 	fwrite(&g_is_init, sizeof(boolean), 1, file);
 	fwrite(&g_order, sizeof(uint32), 1, file);
 	fwrite(&g_size, sizeof(uint32), 1, file);
-	fwrite(&g_ip_count, sizeof(uint32), 1, file);
 	fwrite(&g_block_start_count, sizeof(uint32), 1, file);
 	fwrite(&g_allocated_count, sizeof(uint32), 1, file);
 	fwrite(&g_capacity, sizeof(uint32), 1, file);
@@ -94,7 +90,6 @@ void _sal_mem_save_into(FILE *file)
 */
 UINT32_GETTER(mem, order)
 UINT32_GETTER(mem, size)
-UINT32_GETTER(mem, ip_count)
 UINT32_GETTER(mem, block_start_count)
 UINT32_GETTER(mem, allocated_count)
 UINT32_GETTER(mem, capacity)
@@ -128,9 +123,8 @@ boolean sal_mem_is_address_valid(uint32 address)
 
 /* We declare a standard macro to test whether a specific FLAG is set on a given
 byte. Remember, a Salis byte contains a 5 bit instruction (of 32 possible) plus
-3 flags: IP, BLOCK_START and ALLOCATED. These flags help organisms identify
-where there is free memory space to reproduce on, and tell the python printer
-module how to color each byte.
+2 flags: BLOCK_START and ALLOCATED. These flags help organisms identify where
+there is free memory space to reproduce on.
 */
 #define FLAG_TEST(name, flag) \
 boolean sal_mem_is_##name(uint32 address) \
@@ -140,7 +134,6 @@ boolean sal_mem_is_##name(uint32 address) \
 	return !!(g_memory[address] & flag); \
 }
 
-FLAG_TEST(ip, IP_FLAG)
 FLAG_TEST(block_start, BLOCK_START_FLAG)
 FLAG_TEST(allocated, ALLOCATED_FLAG)
 
@@ -159,7 +152,6 @@ void _sal_mem_set_##name(uint32 address) \
 	} \
 }
 
-FLAG_SETTER(ip, IP_FLAG)
 FLAG_SETTER(block_start, BLOCK_START_FLAG)
 FLAG_SETTER(allocated, ALLOCATED_FLAG)
 
@@ -178,7 +170,6 @@ void _sal_mem_unset_##name(uint32 address) \
 	} \
 }
 
-FLAG_UNSETTER(ip, IP_FLAG)
 FLAG_UNSETTER(block_start, BLOCK_START_FLAG)
 FLAG_UNSETTER(allocated, ALLOCATED_FLAG)
 
@@ -293,7 +284,6 @@ static boolean module_is_valid(void)
 	to when running optimized, but it is also **very** useful for debugging!
 	*/
 	uint32 bidx;
-	uint32 ip_count = 0;
 	uint32 block_start_count = 0;
 	uint32 allocated_count = 0;
 	assert(g_is_init);
@@ -304,12 +294,10 @@ static boolean module_is_valid(void)
 	then compare the sum to the flag counters to assert module validity.
 	*/
 	for (bidx = 0; bidx < g_size; bidx++) {
-		if (sal_mem_is_ip(bidx)) ip_count++;
 		if (sal_mem_is_block_start(bidx)) block_start_count++;
 		if (sal_mem_is_allocated(bidx)) allocated_count++;
 	}
 
-	assert(ip_count == g_ip_count);
 	assert(block_start_count == g_block_start_count);
 	assert(allocated_count == g_allocated_count);
 	return TRUE;
