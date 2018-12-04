@@ -146,10 +146,6 @@ static boolean block_is_free_and_valid(uint32 address, uint32 size)
 		uint32 off_addr = offset + address;
 		if (!sal_mem_is_address_valid(off_addr)) return FALSE;
 		if (sal_mem_is_allocated(off_addr)) return FALSE;
-
-		/* Deallocated addresses must have the BLOCK_START flag unset as well.
-		*/
-		assert(!sal_mem_is_block_start(off_addr));
 	}
 
 	return TRUE;
@@ -263,7 +259,6 @@ static void proc_create(
 	if (allocate) {
 		uint32 offset;
 		assert(block_is_free_and_valid(address, size));
-		_sal_mem_set_block_start(address);
 
 		for (offset = 0; offset < size; offset++) {
 			uint32 off_addr = offset + address;
@@ -293,22 +288,18 @@ void sal_proc_create(uint32 address, uint32 mb1s)
 
 static void free_memory_block(uint32 address, uint32 size)
 {
-	/* Deallocate a memory block. This includes unsetting the BLOCK_START flag
-	on the first byte.
+	/* Deallocate a memory block.
 	*/
 	uint32 offset;
 	assert(sal_mem_is_address_valid(address));
 	assert(sal_mem_is_address_valid(address + size - 1));
-	assert(sal_mem_is_block_start(address));
 	assert(size);
-	_sal_mem_unset_block_start(address);
 
 	for (offset = 0; offset < size; offset++) {
 		/* Iterate all addresses in block and unset the ALLOCATED flag in them.
 		*/
 		uint32 off_addr = offset + address;
 		assert(sal_mem_is_allocated(off_addr));
-		assert(!sal_mem_is_block_start(off_addr));
 		_sal_mem_unset_allocated(off_addr);
 	}
 }
@@ -386,7 +377,7 @@ static boolean block_is_allocated(uint32 address, uint32 size)
 static boolean proc_is_valid(uint32 pidx)
 {
 	/* Assert that the process with the given ID is in a valid state. This
-	means that all of its owned memory must be allocated and that the proper
+	means that all of its owned memory must be allocated and that the allocated
 	flags are set in place. IP and SP must be located in valid addresses.
 	*/
 	assert(g_is_init);
@@ -395,11 +386,9 @@ static boolean proc_is_valid(uint32 pidx)
 	if (!sal_proc_is_free(pidx)) {
 		assert(sal_mem_is_address_valid(g_procs[pidx].ip));
 		assert(sal_mem_is_address_valid(g_procs[pidx].sp));
-		assert(sal_mem_is_block_start(g_procs[pidx].mb1a));
 		assert(block_is_allocated(g_procs[pidx].mb1a, g_procs[pidx].mb1s));
 
 		if (g_procs[pidx].mb2s) {
-			assert(sal_mem_is_block_start(g_procs[pidx].mb2a));
 			assert(block_is_allocated(g_procs[pidx].mb2a, g_procs[pidx].mb2s));
 		}
 	}
@@ -416,7 +405,6 @@ static boolean module_is_valid(void)
 	*/
 	uint32 pidx;
 	uint32 alloc_count = 0;
-	uint32 block_count = 0;
 	assert(g_is_init);
 
 	/* Check that each individual process is in a valid state. We can do this
@@ -434,18 +422,15 @@ static boolean module_is_valid(void)
 	for (pidx = 0; pidx < g_capacity; pidx++) {
 		if (!sal_proc_is_free(pidx)) {
 			alloc_count += g_procs[pidx].mb1s;
-			block_count++;
 
 			if (g_procs[pidx].mb2s) {
 				assert(g_procs[pidx].mb1a != g_procs[pidx].mb2a);
 				alloc_count += g_procs[pidx].mb2s;
-				block_count++;
 			}
 		}
 	}
 
-	assert(block_count == sal_mem_get_block_start_count());
-	assert(alloc_count == sal_mem_get_allocated_count());
+	assert(alloc_count == sal_mem_get_allocated());
 	return TRUE;
 }
 
@@ -849,17 +834,12 @@ static void alloc(uint32 pidx, boolean forward)
 	}
 
 	/* CONDITION 3: no collision detected; enlarge child memory block and
-	increment seeker pointer. Also, correct position of BLOCK_START bit flag.
+	increment seeker pointer.
 	*/
 	_sal_mem_set_allocated(g_procs[pidx].sp);
 
-	if (!g_procs[pidx].mb2s) {
+	if (!g_procs[pidx].mb2s || !forward) {
 		g_procs[pidx].mb2a = g_procs[pidx].sp;
-		_sal_mem_set_block_start(g_procs[pidx].sp);
-	} else if (!forward) {
-		_sal_mem_unset_block_start(g_procs[pidx].mb2a);
-		g_procs[pidx].mb2a = g_procs[pidx].sp;
-		_sal_mem_set_block_start(g_procs[pidx].mb2a);
 	}
 
 	g_procs[pidx].mb2s++;
@@ -1312,7 +1292,7 @@ void _sal_proc_cycle(void)
 
 		/* Kill oldest processes whenever memory gets filled over capacity.
 		*/
-		while (sal_mem_get_allocated_count() > sal_mem_get_capacity()) {
+		while (sal_mem_get_allocated() > sal_mem_get_capacity()) {
 			proc_kill();
 		}
 	}
