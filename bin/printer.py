@@ -512,8 +512,7 @@ class Printer:
 			("MEMORY", [
 				("e", "order", self.__sim.lib.sal_mem_get_order),
 				("e", "size", self.__sim.lib.sal_mem_get_size),
-				("e", "blocks", self.__sim.lib.sal_mem_get_block_start_count),
-				("e", "allocated", self.__sim.lib.sal_mem_get_allocated_count),
+				("e", "allocated", self.__sim.lib.sal_mem_get_allocated),
 				("s", ""),
 				("h", "INSTRUCTIONS"),
 			] + inst_widget),

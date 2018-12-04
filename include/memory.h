@@ -3,14 +3,13 @@
 * @author Paul Oliver
 *
 * This module gives access to Salis memory. You can check the state of each
-* byte (instruction and flags) at any time and also perform manual memory
+* byte (instruction and alloc-flag) at any time and also perform manual memory
 * manipulations.
 */
 
 #ifndef SALIS_MEMORY_H
 #define SALIS_MEMORY_H
 
-#define BLOCK_START_FLAG 0x40
 #define ALLOCATED_FLAG 0x20
 #define INSTRUCTION_MASK 0x1f
 
@@ -29,15 +28,10 @@ SALIS_API uint32 sal_mem_get_order(void);
 */
 SALIS_API uint32 sal_mem_get_size(void);
 
-/** Get amount of addresses with the memory-block-start flag set on them.
-* @return Amount of addresses with the memory-block-start flag set
-*/
-SALIS_API uint32 sal_mem_get_block_start_count(void);
-
 /** Get amount of addresses with the allocated flag set on them.
 * @return Amount of addresses with the allocated flag set
 */
-SALIS_API uint32 sal_mem_get_allocated_count(void);
+SALIS_API uint32 sal_mem_get_allocated(void);
 
 /** Get memory capacity.
 * @return Memory capacity (capacity == size / 2)
@@ -61,28 +55,14 @@ SALIS_API boolean sal_mem_is_over_capacity(void);
 */
 SALIS_API boolean sal_mem_is_address_valid(uint32 address);
 
-/** Check if given address has the memory-block-start flag set.
-* @param address Address being queried
-* @return Memory-block-start flag is set on this address
-*/
-SALIS_API boolean sal_mem_is_block_start(uint32 address);
-
 /** Check if given address has the allocated flag set.
 * @param address Address being queried
 * @return Allocated flag is set on this address
 */
 SALIS_API boolean sal_mem_is_allocated(uint32 address);
 
-void _sal_mem_set_block_start(uint32 address);
 void _sal_mem_set_allocated(uint32 address);
-void _sal_mem_unset_block_start(uint32 address);
 void _sal_mem_unset_allocated(uint32 address);
-
-/** Get currently set flags at given address.
-* @param address Address being queried
-* @return Byte containing set flag bits
-*/
-SALIS_API uint8 sal_mem_get_flags(uint32 address);
 
 /** Get current instruction at address.
 * @param address Address being queried
@@ -98,7 +78,7 @@ SALIS_API void sal_mem_set_inst(uint32 address, uint8 inst);
 
 /** Get current byte at address.
 * @param address Address being queried
-* @return Byte currently written at address (includes bit flags & instruction)
+* @return Byte currently written at address (includes alloc-flag & instruction)
 */
 SALIS_API uint8 sal_mem_get_byte(uint32 address);
 
