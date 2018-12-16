@@ -191,6 +191,10 @@ class Salis:
 			"-v", "--version", action="version",
 			version="Salis: A-Life Simulator (" + __version__ + ")"
 		)
+		parser.add_argument(
+			"-d", "--debug", action="store_true",
+			help="Run debug build of Salis library"
+		)
 
 		# Initialize the 'new/load' action subparsers.
 		subparsers = parser.add_subparsers(
@@ -266,7 +270,13 @@ class Salis:
 		Note to developers: the 'SALIS_API' keyword should *NOT* be used
 		anywhere else in the header files (not even in comments)!
 		"""
-		lib = CDLL(os.path.join(self.path, "lib/libsalis.so"))
+		# Load debug or release versions of Salis into a CDLL object.
+		if self.args.debug:
+			suff = "-deb"
+		else:
+			suff = "-rel"
+
+		lib = CDLL(os.path.join(self.path, "lib/libsalis{}.so".format(suff)))
 		include_dir = os.path.join(self.path, "../include")
 		c_includes = [
 			os.path.join(include_dir, f)
