@@ -9,10 +9,9 @@
 #define BLOCK_FLAG 0x40
 #define IP_FLAG 0x80
 
-static void apply_flag(
-	uint32 origin, uint32 max_pos, uint32 cell_size, uint32 address,
-	uint32 flag, uint8_p buffer
-) {
+static void apply_flag(uint32 origin, uint32 max_pos, uint32 cell_size,
+	uint32 address, uint32 flag, uint8_p buffer)
+{
 	if (address >= origin && address < max_pos) {
 		/* Flag falls inside rendered image. We can 'and' the bit to the
 		corresponding pixel.
@@ -22,9 +21,9 @@ static void apply_flag(
 	}
 }
 
-void sal_ren_get_image(
-	uint32 origin, uint32 cell_size, uint32 buff_size, uint8_p buffer
-) {
+void sal_ren_get_image(uint32 origin, uint32 cell_size, uint32 buff_size,
+	uint8_p buffer)
+{
 	/* Render a 1D image of a given section of memory, at a given resolution
 	(zoom) and store it in a pre-allocated 'buffer'.
 
@@ -79,14 +78,12 @@ void sal_ren_get_image(
 		if (!sal_proc_is_free(i)) {
 			Process proc = sal_proc_get_proc(i);
 			apply_flag(origin, max_pos, cell_size, proc.ip, IP_FLAG, buffer);
-			apply_flag(
-				origin, max_pos, cell_size, proc.mb1a, BLOCK_FLAG, buffer
-			);
+			apply_flag(origin, max_pos, cell_size, proc.mb1a, BLOCK_FLAG,
+				buffer);
 
 			if (proc.mb2s) {
-				apply_flag(
-					origin, max_pos, cell_size, proc.mb2a, BLOCK_FLAG, buffer
-				);
+				apply_flag(origin, max_pos, cell_size, proc.mb2a, BLOCK_FLAG,
+					buffer);
 			}
 		}
 	}
