@@ -21,6 +21,7 @@ import re
 import sys
 import time
 import traceback
+
 from argparse import ArgumentParser, HelpFormatter
 from ctypes import CDLL, c_bool, c_uint8, c_uint32, c_char_p, POINTER
 from handler import Handler
@@ -150,6 +151,11 @@ class Salis:
 		""" Signal we want to exit the simulator.
 		"""
 		self.__exit = True
+
+
+	###############################
+	# Private methods
+	###############################
 
 	def __get_path(self):
 		""" Retrieve the absolute path of this script. We need to do this in
@@ -334,7 +340,10 @@ class Salis:
 
 		return lib
 
+
+###############################
+# Entry point
+###############################
+
 if __name__ == "__main__":
-	""" Entry point...
-	"""
 	Salis().run()
