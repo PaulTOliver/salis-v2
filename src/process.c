@@ -240,9 +240,9 @@ static uint32 get_new_proc_from_queue(uint32 queue_lock)
 	}
 }
 
-static void proc_create(
-	uint32 address, uint32 size, uint32 queue_lock, boolean allocate
-) {
+static void proc_create(uint32 address, uint32 size, uint32 queue_lock,
+	boolean allocate)
+{
 	/* Give birth to a new process! We must specify the address and size of the
 	new organism.
 	*/
@@ -483,10 +483,8 @@ static boolean are_templates_complements(uint32 source, uint32 complement)
 	assert(sal_mem_is_address_valid(complement));
 	assert(sal_is_template(sal_mem_get_inst(source)));
 
-	while (
-		sal_mem_is_address_valid(source) &&
-		sal_is_template(sal_mem_get_inst(source))
-	) {
+	while (sal_mem_is_address_valid(source) &&
+			sal_is_template(sal_mem_get_inst(source))) {
 		/* Iterate address by address, checking complementarity on each
 		consecutive byte pair.
 		*/
@@ -631,10 +629,8 @@ static boolean addr_seek(uint32 pidx, boolean forward)
 	in front of the caller organism's instruction pointer, and a template just
 	after that.
 	*/
-	if (
-		!sal_mem_is_address_valid(next1_addr) ||
-		!sal_mem_is_address_valid(next2_addr)
-	) {
+	if (!sal_mem_is_address_valid(next1_addr) ||
+			!sal_mem_is_address_valid(next2_addr)) {
 		on_fault(pidx);
 		increment_ip(pidx);
 		return FALSE;
@@ -643,10 +639,7 @@ static boolean addr_seek(uint32 pidx, boolean forward)
 	next1_inst = sal_mem_get_inst(next1_addr);
 	next2_inst = sal_mem_get_inst(next2_addr);
 
-	if (
-		!sal_is_mod(next1_inst) ||
-		!sal_is_template(next2_inst)
-	) {
+	if (!sal_is_mod(next1_inst) || !sal_is_template(next2_inst)) {
 		on_fault(pidx);
 		increment_ip(pidx);
 		return FALSE;
@@ -663,9 +656,9 @@ static boolean addr_seek(uint32 pidx, boolean forward)
 	return FALSE;
 }
 
-static boolean get_register_pointers(
-	uint32 pidx, uint32_p *regs, uint32 reg_count
-) {
+static boolean get_register_pointers(uint32 pidx, uint32_p *regs,
+	uint32 reg_count)
+{
 	/* This function is used to get pointers to a calling organism registers.
 	Specifically, registers returned are those that will be used when executing
 	the caller organism's current instruction.
@@ -685,10 +678,8 @@ static boolean get_register_pointers(
 	for (ridx = 0; ridx < reg_count; ridx++) {
 		uint32 mod_addr = g_procs[pidx].ip + 1 + ridx;
 
-		if (
-			!sal_mem_is_address_valid(mod_addr) ||
-			!sal_is_mod(sal_mem_get_inst(mod_addr))
-		) {
+		if (!sal_mem_is_address_valid(mod_addr) ||
+				!sal_is_mod(sal_mem_get_inst(mod_addr))) {
 			return FALSE;
 		}
 
@@ -1014,10 +1005,8 @@ static void load(uint32 pidx)
 	assert(pidx < g_capacity);
 	assert(!sal_proc_is_free(pidx));
 
-	if (
-		!get_register_pointers(pidx, regs, 2) ||
-		!sal_mem_is_address_valid(*regs[0])
-	) {
+	if (!get_register_pointers(pidx, regs, 2) ||
+			!sal_mem_is_address_valid(*regs[0])) {
 		on_fault(pidx);
 		increment_ip(pidx);
 		return;
@@ -1051,10 +1040,8 @@ static boolean is_writeable_by(uint32 pidx, uint32 address)
 		uint32 lo2 = g_procs[pidx].mb2a;
 		uint32 hi1 = lo1 + g_procs[pidx].mb1s;
 		uint32 hi2 = lo2 + g_procs[pidx].mb2s;
-		return (
-			(address >= lo1 && address < hi1) ||
-			(address >= lo2 && address < hi2)
-		);
+		return ((address >= lo1 && address < hi1) ||
+			(address >= lo2 && address < hi2));
 	}
 }
 
@@ -1068,11 +1055,8 @@ static void write(uint32 pidx)
 	assert(pidx < g_capacity);
 	assert(!sal_proc_is_free(pidx));
 
-	if (
-		!get_register_pointers(pidx, regs, 2) ||
-		!sal_mem_is_address_valid(*regs[0]) ||
-		!sal_is_inst(*regs[1])
-	) {
+	if (!get_register_pointers(pidx, regs, 2) ||
+			!sal_mem_is_address_valid(*regs[0]) || !sal_is_inst(*regs[1])) {
 		on_fault(pidx);
 		increment_ip(pidx);
 		return;
@@ -1163,8 +1147,7 @@ static void push(uint32 pidx)
 	increment_ip(pidx);
 }
 
-static void
-pop(uint32 pidx)
+static void pop(uint32 pidx)
 {
 	/* Pop value from the stack into a given register.
 	*/
