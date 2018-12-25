@@ -151,6 +151,11 @@ class Handler:
 				# Store command on console history.
 				self.console_history.append(command_raw.strip())
 
+
+	###############################
+	# Private methods
+	###############################
+
 	def __raise(self, message):
 		""" Generic exception thrower. Throws a 'RuntimeError' initialized with
 		the given message.
