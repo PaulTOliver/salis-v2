@@ -142,19 +142,31 @@ class Printer:
 					max_scroll, self.__proc_element_scroll
 				)
 
-	def proc_scroll_down(self):
+	def proc_scroll_down(self, fast=False):
 		""" Scroll process data table (on PROCESS view) up.
 		"""
 		if self.current_page == "PROCESS":
-			self.proc_list_scroll = max(0, self.proc_list_scroll - 1)
+			if fast:
+				len_page = len(self.__main) + len(self.__pages["PROCESS"]) + 6
+				scroll = max(0, self.size[0] - len_page)
+			else:
+				scroll = 1
 
-	def proc_scroll_up(self):
+			self.proc_list_scroll = max(0, self.proc_list_scroll - scroll)
+
+	def proc_scroll_up(self, fast=False):
 		""" Scroll process data table (on PROCESS view) down.
 		"""
 		if self.current_page == "PROCESS":
+			if fast:
+				len_page = len(self.__main) + len(self.__pages["PROCESS"]) + 6
+				scroll = max(0, self.size[0] - len_page)
+			else:
+				scroll = 1
+
 			self.proc_list_scroll = min(
 				self.__sim.lib.sal_proc_get_capacity() - 1,
-				self.proc_list_scroll + 1
+				self.proc_list_scroll + scroll
 			)
 
 	def proc_scroll_to(self, proc_id):
