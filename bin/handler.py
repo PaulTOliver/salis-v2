@@ -32,6 +32,7 @@ class Handler:
 		self.__sim = sim
 		self.__printer = sim.printer
 		self.__inst_dict = self.__get_inst_dict()
+		self.__min_commands = [ord("M"), ord(" "), curses.KEY_RESIZE]
 		self.console_history = []
 
 	def process_cmd(self, cmd):
@@ -39,7 +40,14 @@ class Handler:
 		ncurses' getch() function, thus, they must be transformed into their
 		character representations with 'ord()'.
 		"""
-		if cmd == ord(" "):
+		# If in minimal mode, only listen to a subset of commands.
+		if self.__sim.minimal and cmd not in self.__min_commands:
+			return
+
+		if cmd == ord("M"):
+			self.__printer.screen.clear()
+			self.__sim.minimal = not self.__sim.minimal
+		elif cmd == ord(" "):
 			self.__sim.toggle_state()
 		elif cmd == curses.KEY_LEFT:
 			self.__printer.flip_page(-1)

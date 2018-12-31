@@ -53,6 +53,7 @@ class Salis:
 		self.printer = Printer(self)
 		self.handler = Handler(self)
 		self.state = "paused"
+		self.minimal = False
 
 		# Based on CLI arguments, initialize a new Salis simulation or load
 		# existing one from file.

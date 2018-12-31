@@ -31,6 +31,7 @@ $ ./bin/salis.py load --file 16.sim
 |`fl`             |Select first/last organism |
 |`k`              |Scroll/go to selected (PROCESS and WORLD page) |
 |`X`              |Toggle hex/decimal value printing |
+|`M`              |Toggle minimal mode |
 |Numbers `[1..0]` |Cycle simulation `2^((n-1) % 10)` steps |
 |Enter            |Activate cursor (WORLD page) |
 
