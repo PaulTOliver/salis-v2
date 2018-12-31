@@ -34,6 +34,7 @@ $ ./bin/salis.py load --file 16.sim
 |`M`              |Toggle minimal mode |
 |Numbers `[1..0]` |Cycle simulation `2^((n-1) % 10)` steps |
 |Enter            |Activate cursor (WORLD page) |
+|Escape           |Save and quit simulation |
 
 ### Console commands
 The console opens up when `c` is pressed. Commands, with their respective
