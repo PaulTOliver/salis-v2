@@ -74,7 +74,7 @@ void sal_ren_get_image(uint32 origin, uint32 cell_size, uint32 buff_size,
 	max_pos = origin + (cell_size * buff_size);
 
 	#pragma omp parallel for
-	for (i = 0; i < sal_proc_get_count(); i++) {
+	for (i = 0; i < sal_proc_get_capacity(); i++) {
 		if (!sal_proc_is_free(i)) {
 			Process proc = sal_proc_get_proc(i);
 			apply_flag(origin, max_pos, cell_size, proc.ip, IP_FLAG, buffer);
