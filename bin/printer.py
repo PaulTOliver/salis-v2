@@ -351,7 +351,7 @@ class Printer:
 		contain actual python exception output.
 		"""
 		self.__print_line(self.size[0] - 1, ">>>", curses.color_pair(
-			self._pair_error
+			self.__pair_error
 		) | curses.A_BOLD)
 		self.screen.refresh()
 
@@ -364,7 +364,7 @@ class Printer:
 		# we can just ignore it.
 		try:
 			console.addstr(0, 0, message, curses.color_pair(
-				self._pair_error
+				self.__pair_error
 			) | curses.A_BOLD)
 		except curses.error:
 			pass
@@ -396,7 +396,7 @@ class Printer:
 		# Print MAIN simulation data.
 		self.__print_line(
 			1, "SALIS[{}]".format(self.__sim.args.file), curses.color_pair(
-				self._pair_header
+				self.__pair_header
 			) | curses.A_BOLD
 		)
 		self.__print_widget(2, self.__main)
@@ -422,9 +422,9 @@ class Printer:
 		"""
 		curses.start_color()
 		curses.use_default_colors()
-		self._pair_header = self.get_color_pair(curses.COLOR_BLUE)
-		self._pair_selected = self.get_color_pair(curses.COLOR_YELLOW)
-		self._pair_error = self.get_color_pair(curses.COLOR_RED)
+		self.__pair_header = self.get_color_pair(curses.COLOR_BLUE)
+		self.__pair_selected = self.get_color_pair(curses.COLOR_YELLOW)
+		self.__pair_error = self.get_color_pair(curses.COLOR_RED)
 
 	def __get_screen(self):
 		""" Prepare and return the main curses window. We also set a shorter
@@ -579,7 +579,7 @@ class Printer:
 	def __print_header(self, ypos, line):
 		""" Print a bold header.
 		"""
-		header_attr = curses.A_BOLD | curses.color_pair(self._pair_header)
+		header_attr = curses.A_BOLD | curses.color_pair(self.__pair_header)
 		self.__print_line(ypos, line, header_attr)
 
 	def __print_value(self, ypos, element, value, attr=curses.A_NORMAL):
@@ -603,7 +603,7 @@ class Printer:
 		if self.__sim.lib.sal_proc_is_free(self.selected_proc):
 			attr = curses.A_NORMAL
 		else:
-			attr = curses.color_pair(self._pair_selected)
+			attr = curses.color_pair(self.__pair_selected)
 
 		self.__print_value(ypos, element, value, attr)
 
@@ -659,7 +659,7 @@ class Printer:
 			if proc_id < self.__sim.lib.sal_proc_get_capacity():
 				if proc_id == self.selected_proc:
 					# Always highlight the selected process.
-					attr = curses.color_pair(self._pair_selected)
+					attr = curses.color_pair(self.__pair_selected)
 				else:
 					attr = curses.A_NORMAL
 
@@ -786,7 +786,7 @@ class Printer:
 			if proc_id < self.__sim.lib.sal_proc_get_capacity():
 				if proc_id == self.selected_proc:
 					# Always highlight the selected process.
-					attr = curses.color_pair(self._pair_selected)
+					attr = curses.color_pair(self.__pair_selected)
 				else:
 					attr = curses.A_NORMAL
 
