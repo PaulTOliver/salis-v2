@@ -52,8 +52,13 @@ class Salis:
 		self.lib = self.__parse_lib()
 		self.printer = Printer(self)
 		self.handler = Handler(self)
-		self.state = "paused"
-		self.minimal = False
+		self.minimal = self.args.minimal
+
+		if self.args.running:
+			self.state = "running"
+			self.printer.set_nodelay(True)
+		else:
+			self.state = "paused"
 
 		# Based on CLI arguments, initialize a new Salis simulation or load
 		# existing one from file.
@@ -191,7 +196,7 @@ class Salis:
 
 		# Initialize the main parser with our custom formatter.
 		parser = ArgumentParser(
-			description="Viewer/controller for the Salis simulator.",
+			description=("Viewer/controller for the Salis simulator."),
 			formatter_class=formatter
 		)
 		parser.add_argument(
@@ -200,12 +205,24 @@ class Salis:
 		)
 		parser.add_argument(
 			"-d", "--debug", action="store_true",
-			help="Run debug build of Salis library"
+			help="run debug build of Salis library"
+		)
+		parser.add_argument(
+			"-m", "--minimal", action="store_true",
+			help="start up Salis in minimal mode"
+		)
+		parser.add_argument(
+			"-r", "--running", action="store_true",
+			help="start up Salis in running state"
 		)
 
 		# Initialize the 'new/load' action subparsers.
 		subparsers = parser.add_subparsers(
-			dest="action", help="Possible actions..."
+			dest="action",
+			help=(
+				"call 'salis.py new --help' or 'salis.py load --help' for "
+				"sublist of commands"
+			)
 		)
 		subparsers.required = True
 
@@ -213,26 +230,26 @@ class Salis:
 		new_parser = subparsers.add_parser("new", formatter_class=formatter)
 		new_parser.add_argument(
 			"-o", "--order", required=True, type=lambda x: int(x, 0),
-			metavar="[1-31]", help="Create new simulation of given ORDER"
+			metavar="[1-31]", help="create new simulation of given ORDER"
 		)
 		new_parser.add_argument(
 			"-f", "--file", required=True, type=str, metavar="FILE",
-			help="Name of FILE to save simulation to on exit"
+			help="name of FILE to save simulation to on exit"
 		)
 		new_parser.add_argument(
 			"-a", "--auto", required=False, type=lambda x: int(x, 0),
-			metavar="INT", help="Auto-save interval for the new simulation"
+			metavar="INT", help="auto-save interval for the new simulation"
 		)
 
 		# Set up subparser for the 'load' existing action.
 		load_parser = subparsers.add_parser("load", formatter_class=formatter)
 		load_parser.add_argument(
 			"-f", "--file", required=True, type=str, metavar="FILE",
-			help="Load previously saved simulation from FILE"
+			help="load previously saved simulation from FILE"
 		)
 		load_parser.add_argument(
 			"-a", "--auto", required=False, type=lambda x: int(x, 0),
-			metavar="INT", help="Auto-save interval for the loaded simulation"
+			metavar="INT", help="auto-save interval for the loaded simulation"
 		)
 
 		# Finally, parse all arguments.
