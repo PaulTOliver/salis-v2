@@ -39,6 +39,7 @@ class Printer:
 		# We can now initialize all other privates.
 		self.__main = self.__get_main()
 		self.__pages = self.__get_pages()
+		self.__minimal = self.__get_minimal()
 		self.__main_scroll = 0
 		self.__proc_element_scroll = 0
 		self.__proc_gene_scroll = 0
@@ -381,6 +382,11 @@ class Printer:
 		""" Print current page to screen. We use the previously generated
 		'__pages' dictionary to easily associate a label to a Salis function.
 		"""
+		# If in minimal mode, print only minial widget.
+		if self.__sim.minimal:
+			self.__print_minimal()
+			return
+
 		# Update selected proc data if in WORLD view.
 		if self.current_page == "WORLD":
 			self.__sim.lib.sal_proc_get_proc_data(self.selected_proc, cast(
@@ -833,3 +839,20 @@ class Printer:
 					):
 						self.selected_proc = proc_id
 						break
+
+	def __get_minimal(self):
+		""" Generate set of data fields to be printed on minimal mode.
+		"""
+		return [
+			("cycle", self.__sim.lib.sal_main_get_cycle),
+			("epoch", self.__sim.lib.sal_main_get_epoch),
+			("procs", self.__sim.lib.sal_proc_get_count),
+		]
+
+	def __print_minimal(self):
+		""" Print minimal mode data fields.
+		"""
+		self.__print_line(1, "Salis --- Minimal mode")
+
+		for i, field in enumerate(self.__minimal):
+			self.__print_line(i + 2, "{}: {}".format(field[0], field[1]()))
