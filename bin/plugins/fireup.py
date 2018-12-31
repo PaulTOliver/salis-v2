@@ -9,7 +9,8 @@ Email: paul.t.oliver.design@gmail.com
 NOTE: REQUIRES TMUX TO WORK!
 
 Use this script to run one (or several) previously saved simulations in the
-background. Each simulator will run inside a tmux session.
+background. Each simulator will be started inside a tmux session, already
+running and in minimal mode.
 
 Remember to give this file correct permissions (chmod +x). To use, call it
 followed by an autosave interval (mandatory) and the list of save-files to
@@ -65,10 +66,10 @@ print("Firing up Salis simulations.")
 
 for fname in args.files:
 	session = "salis-{}".format(fname).replace(".", "-")
-	salis_cmd = "{} load -f {} -a {}".format(salis, fname, args.auto)
+	salis_cmd = "{} -m -r load -f {} -a {}".format(salis, fname, args.auto)
 	subprocess.run(["tmux", "new-session", "-d", "-s", session])
 	subprocess.run(["tmux", "send-keys", "-t", session, salis_cmd])
-	subprocess.run(["tmux", "send-keys", "-t", session, "Enter", "Space"])
+	subprocess.run(["tmux", "send-keys", "-t", session, "Enter"])
 	print("New tmux session '{}' is running '{}' in the background.".format(
 		session, fname
 	))
