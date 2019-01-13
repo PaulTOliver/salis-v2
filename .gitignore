@@ -1,6 +1,5 @@
 bin/__pycache__/*
 bin/modules/__pycache__/*
-bin/common/pipe
 bin/error.log
 bin/lib/libsalis-*.so
 bin/sims/*.sim
