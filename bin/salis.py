@@ -48,7 +48,6 @@ class Salis:
 		self.__log = self.__open_log_file()
 		self.__exit = False
 		self.save_file_path = self.__get_save_file_path()
-		self.common_pipe = self.__get_common_pipe()
 		self.lib = self.__parse_lib()
 		self.printer = Printer(self)
 		self.handler = Handler(self)
@@ -63,14 +62,9 @@ class Salis:
 		# Based on CLI arguments, initialize a new Salis simulation or load
 		# existing one from file.
 		if self.args.action == "new":
-			self.lib.sal_main_init(
-				self.args.order, self.common_pipe.encode("utf-8")
-			)
+			self.lib.sal_main_init(self.args.order)
 		elif self.args.action == "load":
-			self.lib.sal_main_load(
-				self.save_file_path.encode("utf-8"),
-				self.common_pipe.encode("utf-8")
-			)
+			self.lib.sal_main_load(self.save_file_path.encode("utf-8"))
 
 	def __del__(self):
 		""" Salis destructor.
@@ -174,12 +168,6 @@ class Salis:
 		simulation when we exit Salis.
 		"""
 		return os.path.join(self.path, "sims", self.args.file)
-
-	def __get_common_pipe(self):
-		""" Get absolute path of the common pipe. This FIFO object may be used
-		by concurrent Salis simulations to share data between themselves.
-		"""
-		return os.path.join(self.path, "common/pipe")
 
 	def __parse_args(self):
 		""" Parse command-line arguments with the 'argparse' module. To learn
@@ -346,6 +334,8 @@ class Salis:
 			"uint32_p": POINTER(c_uint32),
 			"string": c_char_p,
 			"Process": None,
+			"Sender": None,
+			"Receiver": None,
 		}
 
 		# Finally, set correct arguments and return types of all Salis
