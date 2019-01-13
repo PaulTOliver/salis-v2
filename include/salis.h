@@ -22,9 +22,8 @@
 
 /** Initialize Salis simulation.
 * @param order Order of memory (memory_size == 1 << order)
-* @param pipe Desired path and file name of common pipe
 */
-SALIS_API void sal_main_init(uint32 order, string pipe);
+SALIS_API void sal_main_init(uint32 order);
 
 /** Free resources and quit Salis.
 */
@@ -32,9 +31,8 @@ SALIS_API void sal_main_quit(void);
 
 /** Load existing Salis simulation from saved file.
 * @param file_name Path of the save file to be loaded
-* @param pipe Desired path and file name of common pipe
 */
-SALIS_API void sal_main_load(string file_name, string pipe);
+SALIS_API void sal_main_load(string file_name);
 
 /** Save Salis simulation to a file.
 * @param file_name Path of the save file to be created

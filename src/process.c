@@ -1077,7 +1077,7 @@ static void write(uint32 pidx)
 
 static void send(uint32 pidx)
 {
-	/* Send instruction on given register into the common pipe.
+	/* Send instruction on given register into the common sender.
 	*/
 	uint32_p reg;
 	assert(g_is_init);
@@ -1102,8 +1102,8 @@ static void send(uint32 pidx)
 
 static void receive(uint32 pidx)
 {
-	/* Receive a single instruction from the common pipe and store it into a
-	specified register. In case the common pipe is empty, it will return the
+	/* Receive a single instruction from the common receiver and store it into
+	a specified register. In case the receiver is unset, it will return the
 	NOP0 instruction.
 	*/
 	uint32_p reg;
