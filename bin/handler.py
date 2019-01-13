@@ -20,12 +20,14 @@ console response. This ability gives an user a whole lot of power, and should
 be used with care.
 """
 
-import os
 import curses
+import os
+import time
 
 
 class Handler:
 	KEY_ESCAPE = 27
+	CYCLE_TIMEOUT = 0.1
 
 	def __init__(self, sim):
 		""" Handler constructor. Simply link this class to the main simulation
@@ -195,11 +197,17 @@ class Handler:
 		raise RuntimeError(message)
 
 	def __cycle_sim(self, factor):
-		""" Simply cycle Salis 'factor' number of times.
+		""" Simply cycle Salis 'factor' number of times. Do not cycle for more
+		than a given amount of time.
 		"""
+		time_max = time.time() + self.CYCLE_TIMEOUT
+
 		for _ in range(factor):
 			self.__sim.lib.sal_main_cycle()
 			self.__sim.check_autosave()
+
+			if time.time() > time_max:
+				break
 
 	def __get_inst_dict(self):
 		""" Transform the instruction list of the printer module into a
