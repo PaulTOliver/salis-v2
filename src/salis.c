@@ -7,14 +7,13 @@ static boolean g_is_init;
 static uint32 g_cycle;
 static uint32 g_epoch;
 
-void sal_main_init(uint32 order, string pipe)
+void sal_main_init(uint32 order)
 {
 	/* Initialize all Salis modules to their initial states. We pass along any
 	arguments to their respective modules.
 	*/
 	assert(!g_is_init);
 	_sal_mem_init(order);
-	_sal_comm_init(pipe);
 	_sal_evo_init();
 	_sal_proc_init();
 	g_is_init = TRUE;
@@ -30,17 +29,16 @@ void sal_main_quit(void)
 	assert(g_is_init);
 	_sal_proc_quit();
 	_sal_evo_quit();
-	_sal_comm_quit();
 	_sal_mem_quit();
 	g_is_init = FALSE;
 	g_cycle = 0;
 	g_epoch = 0;
 }
 
-void sal_main_load(string file_name, string pipe)
+void sal_main_load(string file_name)
 {
 	/* Load simulation state from file. This file must have been created by
-	'sal_main_save()'. File name of common pipe must also be provided.
+	'sal_main_save()'.
 	*/
 	FILE *file;
 	assert(!g_is_init);
@@ -54,7 +52,6 @@ void sal_main_load(string file_name, string pipe)
 	_sal_evo_load_from(file);
 	_sal_proc_load_from(file);
 	fclose(file);
-	_sal_comm_init(pipe);
 }
 
 void sal_main_save(string file_name)
