@@ -16,8 +16,8 @@ import time
 
 from collections import OrderedDict
 from ctypes import c_uint8, c_uint32, cast, POINTER
-from handler import Handler
-from world import World
+from modules.handler import Handler
+from modules.world import World
 
 
 class Printer:
