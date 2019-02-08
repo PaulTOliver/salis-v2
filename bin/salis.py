@@ -20,10 +20,10 @@ import os
 import re
 import sys
 import time
-import traceback
 
 from argparse import ArgumentParser, HelpFormatter
 from ctypes import CDLL, c_bool, c_uint8, c_uint32, c_char_p, POINTER
+from modules.common import Common
 from modules.handler import Handler
 from modules.printer import Printer
 from subprocess import check_call
@@ -49,6 +49,7 @@ class Salis:
 		self.__exit = False
 		self.save_file_path = self.__get_save_file_path()
 		self.lib = self.__parse_lib()
+		self.common = Common(self)
 		self.printer = Printer(self)
 		self.handler = Handler(self)
 		self.minimal = self.args.minimal
@@ -65,6 +66,15 @@ class Salis:
 			self.lib.sal_main_init(self.args.order)
 		elif self.args.action == "load":
 			self.lib.sal_main_load(self.save_file_path.encode("utf-8"))
+
+		# Configure Common module. Pass C callbacks to Salis and load settings
+		# for this simulator (if they exist).
+		self.common.define_functors()
+
+		try:
+			self.common.load_network_config(self.args.file + ".json")
+		except FileNotFoundError:
+			pass
 
 	def __del__(self):
 		""" Salis destructor.
@@ -85,6 +95,15 @@ class Salis:
 		):
 			os.remove(self.__log)
 
+	def cycle(self):
+		""" Perform all cycle operations. These include cycling the actual
+		Salis simulator, checking for autosave intervals and cycling the Common
+		module.
+		"""
+		self.common.cycle()
+		self.lib.sal_main_cycle()
+		self.check_autosave()
+
 	def run(self):
 		""" Runs main simulation loop. Curses may be placed on non-blocking
 		mode, which allows simulation to run freely while still listening to
@@ -100,8 +119,7 @@ class Salis:
 				end = time.time() + 0.015
 
 				while time.time() < end:
-					self.lib.sal_main_cycle()
-					self.check_autosave()
+					self.cycle()
 
 	def toggle_state(self):
 		""" Toggle between 'paused' and 'running' states. On 'running' curses
@@ -148,8 +166,9 @@ class Salis:
 				check_call(["gzip", auto_path])
 
 	def exit(self):
-		""" Signal we want to exit the simulator.
+		""" Save network settings and signal we want to exit the simulator.
 		"""
+		self.common.save_network_config(self.args.file + ".json")
 		self.__exit = True
 
 
@@ -334,8 +353,8 @@ class Salis:
 			"uint32_p": POINTER(c_uint32),
 			"string": c_char_p,
 			"Process": None,
-			"Sender": None,
-			"Receiver": None,
+			"Sender": Common.SENDER_TYPE,
+			"Receiver": Common.RECEIVER_TYPE,
 		}
 
 		# Finally, set correct arguments and return types of all Salis
