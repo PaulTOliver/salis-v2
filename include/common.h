@@ -12,23 +12,32 @@
 #ifndef SALIS_COMMON_H
 #define SALIS_COMMON_H
 
-/* Typedef sender functor type for easy python parsing.
+/**
+* Typedef sender functor type for easy python parsing.
 */
 typedef void (*Sender)(uint8 inst);
 
-/* Typedef receiver functor type for easy python parsing.
+/**
+* Typedef receiver functor type for easy python parsing.
 */
 typedef uint8 (*Receiver)(void);
 
-/* Set sender functor. When unset, SEND instruction does nothing.
+/**
+* Set sender functor. When unset, SEND instruction does nothing.
 * @param sender Sender functor
 */
 SALIS_API void sal_comm_set_sender(Sender sender);
 
-/* Set receiver functor. When unset, RCVE instruction does nothing.
+/**
+* Set receiver functor. When unset, RCVE instruction does nothing.
 * @param receiver Receiver functor
 */
 SALIS_API void sal_comm_set_receiver(Receiver receiver);
+
+
+/*******************************
+* PRIVATES                     *
+*******************************/
 
 void _sal_comm_send(uint8 inst);
 uint8 _sal_comm_receive(void);

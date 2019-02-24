@@ -20,13 +20,14 @@ import os
 import re
 import sys
 import time
-
 from argparse import ArgumentParser, HelpFormatter
+from subprocess import check_call
+
 from ctypes import CDLL, c_bool, c_uint8, c_uint32, c_char_p, POINTER
+
 from modules.common import Common
 from modules.handler import Handler
 from modules.printer import Printer
-from subprocess import check_call
 
 
 __version__ = "2.0"

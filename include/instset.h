@@ -12,7 +12,8 @@
 
 #define INST_COUNT 32
 
-/** Salis instruction set. The 'SALIS_INST' macro and inline doc-comments help
+/**
+* Salis instruction set. The 'SALIS_INST' macro and inline doc-comments help
 * python parse this file. Don't edit these unless you know what you're doing!
 */
 enum {
@@ -50,19 +51,22 @@ enum {
 	SALIS_INST POPN  /**< ~ Pop value from stack */
 };
 
-/** Determine if an unsigned integer contains a valid instruction.
+/**
+* Determine if an unsigned integer contains a valid instruction.
 * @param byte Any unsigned integer up to 32 bits
 * @return Whether or nor integer contains a valid instruction
 */
 SALIS_API boolean sal_is_inst(uint32 word);
 
-/** Determine if instruction is a template constructor [NOP0-NOP1].
+/**
+* Determine if instruction is a template constructor [NOP0-NOP1].
 * @param inst Must contain a valid instruction
 * @return Whether or not instruction is a template constructor
 */
 SALIS_API boolean sal_is_template(uint32 inst);
 
-/** Determine if instruction a register modifier [MOD0-MOD3].
+/**
+* Determine if instruction a register modifier [MOD0-MOD3].
 * @param inst Must contain a valid instruction
 * @return Whether or not instruction is a register modifier
 */

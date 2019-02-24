@@ -16,8 +16,9 @@ static uint32 g_state[4];
 
 void _sal_evo_init(void)
 {
-	/* Start up the evolver module. We simply set the 128 bits into a random
-	state by calling 'rand()'.
+	/*
+	* Start up the evolver module. We simply set the 128 bits into a random
+	* state by calling 'rand()'.
 	*/
 	assert(!g_is_init);
 	srand((uint32)time(NULL));
@@ -30,7 +31,8 @@ void _sal_evo_init(void)
 
 void _sal_evo_quit(void)
 {
-	/* Quit the evolver module. Reset everything back to zero.
+	/*
+	* Quit the evolver module. Reset everything back to zero.
 	*/
 	assert(g_is_init);
 	g_is_init = FALSE;
@@ -41,7 +43,8 @@ void _sal_evo_quit(void)
 
 void _sal_evo_load_from(FILE *file)
 {
-	/* Load evolver state from a binary file.
+	/*
+	* Load evolver state from a binary file.
 	*/
 	assert(!g_is_init);
 	assert(file);
@@ -53,7 +56,8 @@ void _sal_evo_load_from(FILE *file)
 
 void _sal_evo_save_into(FILE *file)
 {
-	/* Save evolver state into a binary file.
+	/*
+	* Save evolver state into a binary file.
 	*/
 	assert(g_is_init);
 	assert(file);
@@ -63,15 +67,17 @@ void _sal_evo_save_into(FILE *file)
 	fwrite(&g_state, sizeof(uint32), 4, file);
 }
 
-/* Getter methods for the evolver module.
+/*
+* Getter methods for the evolver module.
 */
 UINT32_GETTER(evo, last_changed_address)
 UINT32_GETTER(evo, calls_on_last_cycle)
 
 uint32 sal_evo_get_state(uint8 state_index)
 {
-	/* Get part of the evolver's internal state (32 bits of 128 total bits) as
-	an unsigned int.
+	/*
+	* Get part of the evolver's internal state (32 bits of 128 total bits) as
+	* an unsigned int.
 	*/
 	assert(g_is_init);
 	assert(state_index < 4);
@@ -80,10 +86,11 @@ uint32 sal_evo_get_state(uint8 state_index)
 
 static uint32 generate_random_number(void)
 {
-	/* Generate a single 32 bit random number. This module makes use of the
-	XOR-Shift pseudo-rng. We use XOR-Shift because it's extremely lightweight
-	and fast, while providing quite good results. Find more info about it here:
-	>>> https://en.wikipedia.org/wiki/Xorshift
+	/*
+	* Generate a single 32 bit random number. This module makes use of the
+	* XOR-Shift pseudo-rng. We use XOR-Shift because it's extremely lightweight
+	* and fast, while providing quite good results. Find more info about it at:
+	* https://en.wikipedia.org/wiki/Xorshift
 	*/
 	uint32 tmp1;
 	uint32 tmp2;
@@ -103,7 +110,8 @@ static uint32 generate_random_number(void)
 
 void _sal_evo_randomize_at(uint32 address)
 {
-	/* Place a random instruction into a given address.
+	/*
+	* Place a random instruction into a given address.
 	*/
 	uint8 inst;
 	assert(g_is_init);
@@ -115,11 +123,11 @@ void _sal_evo_randomize_at(uint32 address)
 
 void _sal_evo_cycle(void)
 {
-	/* During each simulation cycle, a random 32 bit integer is generated. If
-	this integer represents a 'valid' address in memory
-	(i.e. new_rand < memory_size), this address becomes hit by a cosmic ray
-	(randomized). This simple mutation scheme is enough to drive evolution in
-	Salis.
+	/*
+	* During each simulation cycle, a random 32 bit integer is generated. If
+	* this integer represents a 'valid' address in memory (new_rand < mem_size),
+	* this address becomes hit by a cosmic ray (randomized). This simple
+	* mutation scheme is enough to drive evolution in Salis.
 	*/
 	uint32 address;
 	assert(g_is_init);

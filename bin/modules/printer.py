@@ -12,9 +12,10 @@ format. It makes use of the curses library for terminal handling.
 import curses
 import curses.textpad
 import os
-
 from collections import OrderedDict
+
 from ctypes import c_uint32, cast, POINTER
+
 from modules.world import World
 
 
