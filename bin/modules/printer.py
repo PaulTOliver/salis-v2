@@ -949,7 +949,8 @@ class Printer:
 	def __print_minimal(self):
 		""" Print minimal mode data fields.
 		"""
-		self.__print_line(1, "Salis --- Minimal mode")
+		self.__print_line(1, "Salis - Mini mode")
 
 		for i, field in enumerate(self.__minimal):
-			self.__print_line(i + 2, "{}: {}".format(field[0], field[1]()))
+			field_1 = self.__data_format(field[1]())
+			self.__print_line(i + 3, "{}: {:>10}".format(field[0], field_1))

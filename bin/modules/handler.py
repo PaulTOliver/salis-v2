@@ -38,6 +38,7 @@ class Handler:
 		self.__min_commands = [
 			ord("M"),
 			ord(" "),
+			ord("X"),
 			curses.KEY_RESIZE,
 			self.KEY_ESCAPE,
 		]
