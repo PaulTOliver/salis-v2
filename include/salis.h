@@ -20,41 +20,49 @@
 #include <common.h>
 #include <process.h>
 
-/** Initialize Salis simulation.
+/**
+* Initialize Salis simulation.
 * @param order Order of memory (memory_size == 1 << order)
 */
 SALIS_API void sal_main_init(uint32 order);
 
-/** Free resources and quit Salis.
+/**
+* Free resources and quit Salis.
 */
 SALIS_API void sal_main_quit(void);
 
-/** Load existing Salis simulation from saved file.
+/**
+* Load existing Salis simulation from saved file.
 * @param file_name Path of the save file to be loaded
 */
 SALIS_API void sal_main_load(string file_name);
 
-/** Save Salis simulation to a file.
+/**
+* Save Salis simulation to a file.
 * @param file_name Path of the save file to be created
 */
 SALIS_API void sal_main_save(string file_name);
 
-/** Check if Salis simulation has been correctly initialized.
+/**
+* Check if Salis simulation has been correctly initialized.
 * @return Salis has been correctly initialized
 */
 SALIS_API boolean sal_main_is_init(void);
 
-/** Get current simulation cycle.
+/**
+* Get current simulation cycle.
 * @return Current simulation cycle
 */
 SALIS_API uint32 sal_main_get_cycle(void);
 
-/** Get current simulation epoch.
+/**
+* Get current simulation epoch.
 * @return Current simulation epoch (1 epoch == 2^32 cycles)
 */
 SALIS_API uint32 sal_main_get_epoch(void);
 
-/** Update simulation once. This will cycle all Salis modules and processes.
+/**
+* Update simulation once. This will cycle all Salis modules and processes.
 */
 SALIS_API void sal_main_cycle(void);
 
