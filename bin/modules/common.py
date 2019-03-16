@@ -16,7 +16,7 @@ from ctypes import c_int, c_uint8, CFUNCTYPE
 
 
 class Common:
-	SENDER_TYPE = CFUNCTYPE(c_int, c_uint8)
+	SENDER_TYPE = CFUNCTYPE(None, c_uint8)
 	RECEIVER_TYPE = CFUNCTYPE(c_uint8)
 
 	def __init__(self, sim, max_buffer_size=4096):
