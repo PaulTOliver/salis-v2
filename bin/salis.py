@@ -166,6 +166,9 @@ class Salis:
 				self.lib.sal_main_save(auto_path.encode("utf-8"))
 				check_call(["gzip", auto_path])
 
+				# Save to main file as well.
+				self.lib.sal_main_save(self.save_file_path.encode("utf-8"))
+
 	def exit(self):
 		""" Save network settings and signal we want to exit the simulator.
 		"""
