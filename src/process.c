@@ -659,39 +659,62 @@ static boolean addr_seek(uint32 pidx, boolean forward)
 {
 	/*
 	* Search (via the seeker pointer) for template address in memory. This
-	* gets called by organisms each cycle during a ADR instruction. Only when a
-	* valid template is found, will this function return TRUE. Otherwise it
-	* will return FALSE, signaling the calling process that a template has not
-	* yet been found.
+	* gets called by organisms each cycle during an ADRB/F instruction. Only
+	* when a valid template is found, will this function return TRUE. Otherwise
+	* it will return FALSE, signaling the calling process that a template has
+	* not yet been found.
 	*/
 	uint32 next1_addr;
 	uint32 next2_addr;
+	uint32 templ_addr;
 	uint8 next1_inst;
 	uint8 next2_inst;
+	boolean is_valid;
 	assert(g_is_init);
 	assert(pidx < g_capacity);
 	assert(!sal_proc_is_free(pidx));
 	next1_addr = g_procs[pidx].ip + 1;
 	next2_addr = g_procs[pidx].ip + 2;
+	is_valid = FALSE;
 
 	/*
-	* This function causes a 'fault' when there is no register modifier right
-	* in front of the caller organism's instruction pointer, and a template
-	* just after that.
+	* This instruction is valid (does not fault) only if one of the following
+	* conditions are met:
+	* 1. Following there's a register modifier instruction and a template.
+	* 2. Following there's a template instruction.
 	*/
 	if (
-		!sal_mem_is_address_valid(next1_addr) ||
-		!sal_mem_is_address_valid(next2_addr)
+		sal_mem_is_address_valid(next1_addr) &&
+		sal_mem_is_address_valid(next2_addr)
 	) {
-		on_fault(pidx);
-		increment_ip(pidx);
-		return FALSE;
+		next1_inst = sal_mem_get_inst(next1_addr);
+		next2_inst = sal_mem_get_inst(next2_addr);
+
+		if (sal_is_mod(next1_inst) && sal_is_template(next2_inst)) {
+			/*
+			* Condition 1 is met.
+			*/
+			templ_addr = next2_addr;
+			is_valid = TRUE;
+		}
 	}
 
-	next1_inst = sal_mem_get_inst(next1_addr);
-	next2_inst = sal_mem_get_inst(next2_addr);
+	if (!is_valid && sal_mem_is_address_valid(next1_addr)) {
+		next1_inst = sal_mem_get_inst(next1_addr);
 
-	if (!sal_is_mod(next1_inst) || !sal_is_template(next2_inst)) {
+		if (sal_is_template(next1_inst)) {
+			/*
+			* Condition 2 is met.
+			*/
+			templ_addr = next1_addr;
+			is_valid = TRUE;
+		}
+	}
+
+	if (!is_valid) {
+		/*
+		* No valid conditions are met. Instruction faults.
+		*/
 		on_fault(pidx);
 		increment_ip(pidx);
 		return FALSE;
@@ -701,7 +724,7 @@ static boolean addr_seek(uint32 pidx, boolean forward)
 	* Check for complementarity. Increment seeker pointer if template has not
 	* been found yet.
 	*/
-	if (are_templates_complements(next2_addr, g_procs[pidx].sp)) {
+	if (are_templates_complements(templ_addr, g_procs[pidx].sp)) {
 		return TRUE;
 	}
 
@@ -775,19 +798,33 @@ static void addr(uint32 pidx)
 	uint32_p reg;
 
 	#ifndef NDEBUG
-		uint32 next2_addr;
-		uint8 next2_inst;
+		uint32 next1_addr;
+		uint8 next1_inst;
 		uint8 sp_inst;
 		assert(g_is_init);
 		assert(pidx < g_capacity);
 		assert(!sal_proc_is_free(pidx));
-		next2_addr = g_procs[pidx].ip + 2;
-		assert(sal_mem_is_address_valid(next2_addr));
-		next2_inst = sal_mem_get_inst(next2_addr);
+		next1_addr = g_procs[pidx].ip + 1;
+		assert(sal_mem_is_address_valid(next1_addr));
+		next1_inst = sal_mem_get_inst(next1_addr);
+		assert(sal_mem_is_address_valid(g_procs[pidx].sp));
 		sp_inst = sal_mem_get_inst(g_procs[pidx].sp);
-		assert(sal_is_template(next2_inst));
-		assert(sal_is_template(sp_inst));
-		assert(are_templates_complements(next2_addr, g_procs[pidx].sp));
+
+		if (sal_is_mod(next1_inst)) {
+			uint32 next2_addr;
+			uint8 next2_inst;
+			next2_addr = g_procs[pidx].ip + 2;
+			assert(sal_mem_is_address_valid(next2_addr));
+			next2_inst = sal_mem_get_inst(next2_addr);
+			assert(sal_is_template(next2_inst));
+			assert(sal_is_template(sp_inst));
+			assert(are_templates_complements(next2_addr, g_procs[pidx].sp));
+		} else if (sal_is_template(next1_inst)) {
+			assert(sal_is_template(sp_inst));
+			assert(are_templates_complements(next1_addr, g_procs[pidx].sp));
+		} else {
+			assert(FALSE);
+		}
 	#endif
 
 	/*
