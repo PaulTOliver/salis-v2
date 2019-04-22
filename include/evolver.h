@@ -17,10 +17,10 @@
 SALIS_API uint32 sal_evo_get_last_changed_address(void);
 
 /**
-* Get amount of random numbers generated during the last simulation cycle.
-* @return Number of calls to the random number generator during the last cycle
+* Get last process which has had a register shift.
+* @return Last process affected by a register shift mutation
 */
-SALIS_API uint32 sal_evo_get_calls_on_last_cycle(void);
+SALIS_API uint32 sal_evo_get_last_changed_process(void);
 
 /**
 * Access the internal state of the XOR-Shift random number generator.

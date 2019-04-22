@@ -563,8 +563,8 @@ class Printer:
 				("h", "INSTRUCTIONS"),
 			] + inst_widget),
 			("EVOLVER", [
-				("e", "last", self.__sim.lib.sal_evo_get_last_changed_address),
-				("e", "calls", self.__sim.lib.sal_evo_get_calls_on_last_cycle),
+				("e", "laddr", self.__sim.lib.sal_evo_get_last_changed_address),
+				("e", "lproc", self.__sim.lib.sal_evo_get_last_changed_process),
 			] + state_widget),
 			("PROCESS", [
 				("e", "count", self.__sim.lib.sal_proc_get_count),

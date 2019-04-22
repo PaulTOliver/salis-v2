@@ -384,6 +384,23 @@ void sal_proc_kill(void)
 	proc_kill();
 }
 
+void sal_proc_mutate(uint32 proc_id, uint32 rand_int)
+{
+	/*
+	* API function to mutate a process. A shift is performed on either its IP,
+	* SP, registers or stack values.
+	*/
+	uint32 inc;
+	uint32 reg;
+	uint32_p proc_root;
+	assert(g_is_init);
+	assert(!sal_proc_is_free(proc_id));
+	inc = (rand_int & (1 << 8)) ? 1 : (uint32)-1;
+	reg = (rand_int % 14);
+	proc_root = &g_procs[proc_id].ip;
+	proc_root[reg] += inc;
+}
+
 static boolean block_is_allocated(uint32 address, uint32 size)
 {
 	/*

@@ -89,6 +89,12 @@ SALIS_API void sal_proc_create(uint32 address, uint32 mb1_size);
 */
 SALIS_API void sal_proc_kill(void);
 
+/**
+* Mutate a process by performing a register shift.
+* @param proc_id ID of Process being mutated
+* @param rand_int Pregenerated random number to be used
+*/
+SALIS_API void sal_proc_mutate(uint32 proc_id, uint32 rand_int);
 
 /*******************************
 * PRIVATES                     *

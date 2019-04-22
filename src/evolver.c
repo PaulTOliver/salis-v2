@@ -8,10 +8,11 @@
 #include "instset.h"
 #include "memory.h"
 #include "evolver.h"
+#include "process.h"
 
 static boolean g_is_init;
 static uint32 g_last_changed_address;
-static uint32 g_calls_on_last_cycle;
+static uint32 g_last_changed_process;
 static uint32 g_state[4];
 
 void _sal_evo_init(void)
@@ -37,7 +38,7 @@ void _sal_evo_quit(void)
 	assert(g_is_init);
 	g_is_init = FALSE;
 	g_last_changed_address = 0;
-	g_calls_on_last_cycle = 0;
+	g_last_changed_process = 0;
 	memset(g_state, 0, sizeof(uint32) * 4);
 }
 
@@ -50,7 +51,7 @@ void _sal_evo_load_from(FILE *file)
 	assert(file);
 	fread(&g_is_init, sizeof(boolean), 1, file);
 	fread(&g_last_changed_address, sizeof(uint32), 1, file);
-	fread(&g_calls_on_last_cycle, sizeof(uint32), 1, file);
+	fread(&g_last_changed_process, sizeof(uint32), 1, file);
 	fread(&g_state, sizeof(uint32), 4, file);
 }
 
@@ -63,7 +64,7 @@ void _sal_evo_save_into(FILE *file)
 	assert(file);
 	fwrite(&g_is_init, sizeof(boolean), 1, file);
 	fwrite(&g_last_changed_address, sizeof(uint32), 1, file);
-	fwrite(&g_calls_on_last_cycle, sizeof(uint32), 1, file);
+	fwrite(&g_last_changed_process, sizeof(uint32), 1, file);
 	fwrite(&g_state, sizeof(uint32), 4, file);
 }
 
@@ -71,7 +72,7 @@ void _sal_evo_save_into(FILE *file)
 * Getter methods for the evolver module.
 */
 UINT32_GETTER(evo, last_changed_address)
-UINT32_GETTER(evo, calls_on_last_cycle)
+UINT32_GETTER(evo, last_changed_process)
 
 uint32 sal_evo_get_state(uint8 state_index)
 {
@@ -104,7 +105,6 @@ static uint32 generate_random_number(void)
 	tmp2 ^= tmp1;
 	tmp2 ^= tmp1 >> 19;
 	g_state[0] = tmp2;
-	g_calls_on_last_cycle++;
 	return tmp2;
 }
 
@@ -124,17 +124,27 @@ void _sal_evo_randomize_at(uint32 address)
 void _sal_evo_cycle(void)
 {
 	/*
-	* During each simulation cycle, a random 32 bit integer is generated. If
-	* this integer represents a 'valid' address in memory (new_rand < mem_size),
-	* this address becomes hit by a cosmic ray (randomized). This simple
-	* mutation scheme is enough to drive evolution in Salis.
+	* During each simulation cycle, two random 32 bit integers are generated.
+	* If these represent a 'valid' address in memory (new_rand < mem_size) or a
+	* valid living process, a cosmic ray or mutation are performed.
 	*/
 	uint32 address;
+	uint32 proc_id;
 	assert(g_is_init);
-	g_calls_on_last_cycle = 0;
 	address = generate_random_number();
+
+	/*
+	* Integer division makes the chances of process mutation proportional to
+	* the number of living processes.
+	*/
+	proc_id = generate_random_number() / sal_proc_get_count();
 
 	if (sal_mem_is_address_valid(address)) {
 		_sal_evo_randomize_at(address);
+	}
+
+	if (proc_id < sal_proc_get_capacity() && !sal_proc_is_free(proc_id)) {
+		sal_proc_mutate(proc_id, generate_random_number());
+		g_last_changed_process = proc_id;
 	}
 }
