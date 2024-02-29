@@ -10,7 +10,6 @@
 #ifndef SALIS_MEMORY_H
 #define SALIS_MEMORY_H
 
-#define IP_FLAG 0x80
 #define BLOCK_START_FLAG 0x40
 #define ALLOCATED_FLAG 0x20
 #define INSTRUCTION_MASK 0x1f
@@ -29,11 +28,6 @@ SALIS_API uint32 sal_mem_get_order(void);
 * @return Size of memory (memory_size == 1 << order)
 */
 SALIS_API uint32 sal_mem_get_size(void);
-
-/** Get amount of addresses with the IP flag set on them.
-* @return Amount of addresses with the IP flag set
-*/
-SALIS_API uint32 sal_mem_get_ip_count(void);
 
 /** Get amount of addresses with the memory-block-start flag set on them.
 * @return Amount of addresses with the memory-block-start flag set
@@ -67,12 +61,6 @@ SALIS_API boolean sal_mem_is_over_capacity(void);
 */
 SALIS_API boolean sal_mem_is_address_valid(uint32 address);
 
-/** Check if given address has the IP flag set.
-* @param address Address being queried
-* @return IP flag is set on this address
-*/
-SALIS_API boolean sal_mem_is_ip(uint32 address);
-
 /** Check if given address has the memory-block-start flag set.
 * @param address Address being queried
 * @return Memory-block-start flag is set on this address
@@ -85,10 +73,8 @@ SALIS_API boolean sal_mem_is_block_start(uint32 address);
 */
 SALIS_API boolean sal_mem_is_allocated(uint32 address);
 
-void _sal_mem_set_ip(uint32 address);
 void _sal_mem_set_block_start(uint32 address);
 void _sal_mem_set_allocated(uint32 address);
-void _sal_mem_unset_ip(uint32 address);
 void _sal_mem_unset_block_start(uint32 address);
 void _sal_mem_unset_allocated(uint32 address);
 
