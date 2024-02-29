@@ -22,6 +22,7 @@ $ ./bin/salis.py load --file 16.sim
 |`S`              |Scroll to top (PROCESS and WORLD page) |
 |`A`              |Scroll to left (PROCESS page) |
 |`zx`             |Zoom in/out (WORLD page) |
+|`i`              |Toggle IP view (WORLD page) |
 |`op`             |Select previous/next organism |
 |`g`              |Toggle data/gene view (PROCESS page) |
 |`c`              |Open console (pauses simulation) |
