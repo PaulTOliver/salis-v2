@@ -75,7 +75,7 @@ class World:
 				# Curses raises an exception when printing on the edge of the
 				# screen; we can just ignore it.
 				try:
-					self.__printer.screen.addch(y, xpad, symb, attr)
+					self.__printer.screen.addstr(y, xpad, symb, attr)
 				except curses.error:
 					pass
 
