@@ -320,9 +320,11 @@ class Printer:
 		output = textbox.edit(validator)
 		curses.curs_set(False)
 
-		# Finally, extract data from console and send to handler.
+		# Finally, extract data from console and send to handler. Respond to
+		# any possible resize event here.
 		self.__sim.handler.handle_console(output)
 		self.screen.clear()
+		self.on_resize()
 
 	def show_console_error(self, message):
 		""" Shows Salis console error messages, if any. These messages might
@@ -354,6 +356,7 @@ class Printer:
 
 		textbox.edit(validator)
 		self.screen.clear()
+		self.on_resize()
 
 	def print_page(self):
 		""" Print current page to screen. We use the previously generated
