@@ -19,8 +19,7 @@
 * @param buff_size Amount of pixels (cells) to be generated
 * @param buffer Pre-allocated buffer to store the rendered pixels into
 */
-SALIS_API void sal_ren_get_image(
-	uint32 origin, uint32 cell_size, uint32 buff_size, uint8_p buffer
-);
+SALIS_API void sal_ren_get_image(uint32 origin, uint32 cell_size,
+	uint32 buff_size, uint8_p buffer);
 
 #endif
