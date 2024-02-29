@@ -25,6 +25,7 @@ from argparse import ArgumentParser, HelpFormatter
 from ctypes import CDLL, c_bool, c_uint8, c_uint32, c_char_p, POINTER
 from handler import Handler
 from printer import Printer
+from subprocess import check_call
 
 
 __version__ = "2.0"
@@ -128,10 +129,11 @@ class Salis:
 			self.autosave = interval
 
 	def check_autosave(self):
-		""" Save simulation to './sims/auto/*' whenever the autosave interval
-		is reached. We use the following naming convention for auto-saved files:
+		""" Save compressed simulation file to './sims/auto/*' whenever the
+		autosave interval is reached. We use the following naming convention
+		for auto-saved files:
 
-		>>> ./sims/auto/<file-name>.<sim-epoch>.<sim-cycle>.auto
+		>>> ./sims/auto/<file-name>.<sim-epoch>.<sim-cycle>.auto.gz
 		"""
 		if self.autosave != "---":
 			if not self.lib.sal_main_get_cycle() % self.autosave:
@@ -142,6 +144,7 @@ class Salis:
 					"auto"
 				]))
 				self.lib.sal_main_save(auto_path.encode("utf-8"))
+				check_call(["gzip", auto_path])
 
 	def exit(self):
 		""" Signal we want to exit the simulator.
