@@ -12,8 +12,7 @@
 static boolean g_is_init;
 static uint32 g_order;
 static uint32 g_size;
-static uint32 g_block_start_count;
-static uint32 g_allocated_count;
+static uint32 g_allocated;
 static uint32 g_capacity;
 static uint32 g_inst_counter[INST_COUNT];
 static uint8_p g_memory;
@@ -45,8 +44,7 @@ void _sal_mem_quit(void)
 	g_is_init = FALSE;
 	g_order = 0;
 	g_size = 0;
-	g_block_start_count = 0;
-	g_allocated_count = 0;
+	g_allocated = 0;
 	g_capacity = 0;
 	memset(g_inst_counter, 0, sizeof(uint32) * INST_COUNT);
 	g_memory = NULL;
@@ -61,8 +59,7 @@ void _sal_mem_load_from(FILE *file)
 	fread(&g_is_init, sizeof(boolean), 1, file);
 	fread(&g_order, sizeof(uint32), 1, file);
 	fread(&g_size, sizeof(uint32), 1, file);
-	fread(&g_block_start_count, sizeof(uint32), 1, file);
-	fread(&g_allocated_count, sizeof(uint32), 1, file);
+	fread(&g_allocated, sizeof(uint32), 1, file);
 	fread(&g_capacity, sizeof(uint32), 1, file);
 	fread(g_inst_counter, sizeof(uint32), INST_COUNT, file);
 	g_memory = calloc(g_size, sizeof(uint8));
@@ -79,8 +76,7 @@ void _sal_mem_save_into(FILE *file)
 	fwrite(&g_is_init, sizeof(boolean), 1, file);
 	fwrite(&g_order, sizeof(uint32), 1, file);
 	fwrite(&g_size, sizeof(uint32), 1, file);
-	fwrite(&g_block_start_count, sizeof(uint32), 1, file);
-	fwrite(&g_allocated_count, sizeof(uint32), 1, file);
+	fwrite(&g_allocated, sizeof(uint32), 1, file);
 	fwrite(&g_capacity, sizeof(uint32), 1, file);
 	fwrite(g_inst_counter, sizeof(uint32), INST_COUNT, file);
 	fwrite(g_memory, sizeof(uint8), g_size, file);
@@ -90,8 +86,7 @@ void _sal_mem_save_into(FILE *file)
 */
 UINT32_GETTER(mem, order)
 UINT32_GETTER(mem, size)
-UINT32_GETTER(mem, block_start_count)
-UINT32_GETTER(mem, allocated_count)
+UINT32_GETTER(mem, allocated)
 UINT32_GETTER(mem, capacity)
 
 uint32 sal_mem_get_inst_count(uint8 inst)
@@ -110,7 +105,7 @@ boolean sal_mem_is_over_capacity(void)
 	out of the reaper queue!
 	*/
 	assert(g_is_init);
-	return g_allocated_count > g_capacity;
+	return g_allocated > g_capacity;
 }
 
 boolean sal_mem_is_address_valid(uint32 address)
@@ -121,72 +116,45 @@ boolean sal_mem_is_address_valid(uint32 address)
 	return address < g_size;
 }
 
-/* We declare a standard macro to test whether a specific FLAG is set on a given
-byte. Remember, a Salis byte contains a 5 bit instruction (of 32 possible) plus
-2 flags: BLOCK_START and ALLOCATED. These flags help organisms identify where
-there is free memory space to reproduce on.
-*/
-#define FLAG_TEST(name, flag) \
-boolean sal_mem_is_##name(uint32 address) \
-{ \
-	assert(g_is_init); \
-	assert(sal_mem_is_address_valid(address)); \
-	return !!(g_memory[address] & flag); \
-}
-
-FLAG_TEST(block_start, BLOCK_START_FLAG)
-FLAG_TEST(allocated, ALLOCATED_FLAG)
-
-/* We define a standard macro for 'setting' one of the 3 FLAGS into a given
-memory address.
-*/
-#define FLAG_SETTER(name, flag) \
-void _sal_mem_set_##name(uint32 address) \
-{ \
-	assert(g_is_init); \
-	assert(sal_mem_is_address_valid(address)); \
-\
-	if (!sal_mem_is_##name(address)) { \
-		g_memory[address] ^= flag; \
-		g_##name##_count++; \
-	} \
-}
-
-FLAG_SETTER(block_start, BLOCK_START_FLAG)
-FLAG_SETTER(allocated, ALLOCATED_FLAG)
-
-/* We define a standard macro for 'unsetting' one of the 3 FLAGS into a given
-memory address.
-*/
-#define FLAG_UNSETTER(name, flag) \
-void _sal_mem_unset_##name(uint32 address) \
-{ \
-	assert(g_is_init); \
-	assert(sal_mem_is_address_valid(address)); \
-\
-	if (sal_mem_is_##name(address)) { \
-		g_memory[address] ^= flag; \
-		g_##name##_count--; \
-	} \
-}
-
-FLAG_UNSETTER(block_start, BLOCK_START_FLAG)
-FLAG_UNSETTER(allocated, ALLOCATED_FLAG)
-
-uint8 sal_mem_get_flags(uint32 address)
+boolean sal_mem_is_allocated(uint32 address)
 {
-	/* Get FLAG bits currently set on a specified address (byte). These may be
-	queried by using a bitwise 'and' operator against the returned byte.
+	/* Check if given address is allocated.
 	*/
 	assert(g_is_init);
 	assert(sal_mem_is_address_valid(address));
-	return g_memory[address] & ~INSTRUCTION_MASK;
+	return !!(g_memory[address] & ALLOCATED_FLAG);
+}
+
+void _sal_mem_set_allocated(uint32 address)
+{
+	/* Set allocated flag on a given address.
+	*/
+	assert(g_is_init);
+	assert(sal_mem_is_address_valid(address));
+
+	if (!sal_mem_is_allocated(address)) {
+		g_memory[address] ^= ALLOCATED_FLAG;
+		g_allocated++;
+	}
+}
+
+void _sal_mem_unset_allocated(uint32 address)
+{
+	/* Unset allocated flag on a given address.
+	*/
+	assert(g_is_init);
+	assert(sal_mem_is_address_valid(address));
+
+	if (sal_mem_is_allocated(address)) {
+		g_memory[address] ^= ALLOCATED_FLAG;
+		g_allocated--;
+	}
 }
 
 uint8 sal_mem_get_inst(uint32 address)
 {
-	/* Get instruction currently set on a specified address (byte), with the
-	FLAG bits turned off.
+	/* Get instruction currently set on a specified address, with the allocated
+	bit flag turned off.
 	*/
 	assert(g_is_init);
 	assert(sal_mem_is_address_valid(address));
@@ -242,21 +210,24 @@ void sal_mem_render_image(
 	#pragma omp parallel for
 	for (i = 0; i < buff_size; i++) {
 		uint32 j;
-		uint32 flag_sum = 0;
 		uint32 inst_sum = 0;
+		uint32 alloc_found = 0;
 		uint32 cell_addr = origin + (i * cell_size);
 
 		for (j = 0; j < cell_size; j++) {
 			uint32 address = j + cell_addr;
 
 			if (sal_mem_is_address_valid(address)) {
-				flag_sum |= sal_mem_get_flags(address);
 				inst_sum += sal_mem_get_inst(address);
+
+				if (sal_mem_is_allocated(address)) {
+					alloc_found = ALLOCATED_FLAG;
+				}
 			}
 		}
 
 		buffer[i] = (uint8)(inst_sum / cell_size);
-		buffer[i] |= (uint8)(flag_sum);
+		buffer[i] |= (uint8)(alloc_found);
 	}
 }
 
@@ -284,8 +255,7 @@ static boolean module_is_valid(void)
 	to when running optimized, but it is also **very** useful for debugging!
 	*/
 	uint32 bidx;
-	uint32 block_start_count = 0;
-	uint32 allocated_count = 0;
+	uint32 allocated = 0;
 	assert(g_is_init);
 	assert(g_capacity <= g_size / 2);
 	assert(inst_count_is_correct());
@@ -294,12 +264,12 @@ static boolean module_is_valid(void)
 	then compare the sum to the flag counters to assert module validity.
 	*/
 	for (bidx = 0; bidx < g_size; bidx++) {
-		if (sal_mem_is_block_start(bidx)) block_start_count++;
-		if (sal_mem_is_allocated(bidx)) allocated_count++;
+		if (sal_mem_is_allocated(bidx)) {
+			allocated++;
+		}
 	}
 
-	assert(block_start_count == g_block_start_count);
-	assert(allocated_count == g_allocated_count);
+	assert(allocated == g_allocated);
 	return TRUE;
 }
 
