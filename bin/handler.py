@@ -69,6 +69,10 @@ class Handler:
 		elif cmd == ord("w"):
 			self.__printer.world.pan_up()
 			self.__printer.proc_scroll_up()
+		elif cmd == ord("S"):
+			self.__printer.proc_scroll_down(fast=True)
+		elif cmd == ord("W"):
+			self.__printer.proc_scroll_up(fast=True)
 		elif cmd == ord("Q"):
 			self.__printer.world.pan_reset()
 			self.__printer.proc_scroll_vertical_reset()
