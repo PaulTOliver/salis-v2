@@ -24,8 +24,8 @@ import traceback
 
 from argparse import ArgumentParser, HelpFormatter
 from ctypes import CDLL, c_bool, c_uint8, c_uint32, c_char_p, POINTER
-from handler import Handler
-from printer import Printer
+from modules.handler import Handler
+from modules.printer import Printer
 from subprocess import check_call
 
 
