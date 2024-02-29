@@ -12,11 +12,9 @@ format. It makes use of the curses library for terminal handling.
 import curses
 import curses.textpad
 import os
-import time
 
 from collections import OrderedDict
-from ctypes import c_uint8, c_uint32, cast, POINTER
-from modules.handler import Handler
+from ctypes import c_uint32, cast, POINTER
 from modules.world import World
 
 
@@ -44,6 +42,7 @@ class Printer:
 		self.__proc_element_scroll = 0
 		self.__proc_gene_scroll = 0
 		self.__proc_gene_view = False
+		self.__common_buffer_scroll = 0
 		self.__curs_y = 0
 		self.__curs_x = 0
 		self.__print_hex = False
@@ -143,6 +142,19 @@ class Printer:
 					max_scroll, self.__proc_element_scroll
 				)
 
+	def comm_scroll_left(self):
+		""" Scroll buffers (on COMMON view) to the left.
+		"""
+		if self.current_page == "COMMON":
+			self.__common_buffer_scroll -= 1
+			self.__common_buffer_scroll = max(0, self.__common_buffer_scroll)
+
+	def comm_scroll_right(self):
+		""" Scroll buffers (on COMMON view) to the right.
+		"""
+		if self.current_page == "COMMON":
+			self.__common_buffer_scroll += 1
+
 	def proc_scroll_down(self, fast=False):
 		""" Scroll process data table (on PROCESS view) up.
 		"""
@@ -194,6 +206,12 @@ class Printer:
 				self.__proc_gene_scroll = 0
 			else:
 				self.__proc_element_scroll = 0
+
+	def comm_scroll_horizontal_reset(self):
+		""" Scroll common in and out buffers back to the left.
+		"""
+		if self.current_page == "COMMON":
+			self.__common_buffer_scroll = 0
 
 	def proc_select_prev(self):
 		""" Select previous process.
@@ -411,6 +429,8 @@ class Printer:
 			self.world.render()
 		elif self.current_page == "PROCESS":
 			self.__print_proc_list()
+		elif self.current_page == "COMMON":
+			self.__print_common_data()
 
 
 	###############################
@@ -552,6 +572,11 @@ class Printer:
 				("e", "last", self.__sim.lib.sal_proc_get_last),
 				("e", "selected", lambda: self.selected_proc),
 			]),
+			("COMMON", [
+				("e", "in", lambda: len(self.__sim.common.in_buffer)),
+				("e", "out", lambda: len(self.__sim.common.out_buffer)),
+				("e", "max", lambda: self.__sim.common.max_buffer_size),
+			]),
 			("WORLD", [
 				("e", "position", lambda: self.world.pos),
 				("e", "zoom", lambda: self.world.zoom),
@@ -627,6 +652,15 @@ class Printer:
 			self.screen.move(ypos, 0)
 			self.screen.clrtoeol()
 
+	def __data_format(self, x):
+		""" Print all proc IDs and elements in decimal or hexadecimal format,
+		depending on hex-flag being set.
+		"""
+		if self.__print_hex:
+			return hex(x)
+		else:
+			return x
+
 	def __print_proc_data_list(self):
 		""" Print list of process data elements in PROCESS page. We can toggle
 		between printing the data elements or the genomes by pressing the 'g'
@@ -643,13 +677,6 @@ class Printer:
 		self.__print_header(ypos, header)
 		ypos += 1
 		proc_id = self.proc_list_scroll
-
-		# Print all proc IDs and elements in decimal or hexadecimal format,
-		# depending on hex-flag being set.
-		if self.__print_hex:
-			data_format = lambda x: hex(x)
-		else:
-			data_format = lambda x: x
 
 		# Lastly, iterate all lines and print as much process data as it fits.
 		# We can scroll the process data table using the 'wasd' keys.
@@ -671,8 +698,8 @@ class Printer:
 				)
 
 				# Lastly, assemble and print the next table row.
-				row = " | ".join(["{:<10}".format(data_format(proc_id))] + [
-					"{:>10}".format(data_format(element))
+				row = " | ".join(["{:<10}".format(self.__data_format(proc_id))] + [
+					"{:>10}".format(self.__data_format(element))
 					for element in proc_data[self.__proc_element_scroll:]
 				])
 				self.__print_line(ypos, row, attr)
@@ -759,19 +786,12 @@ class Printer:
 		between printing the genomes or the data elements by pressing the 'g'
 		key.
 		"""
-		# Print all proc IDs and gene scroll in decimal or hexadecimal format,
-		# depending on hex-flag being set.
-		if self.__print_hex:
-			data_format = lambda x: hex(x)
-		else:
-			data_format = lambda x: x
-
 		# First, print the table header. We print the current gene-scroll
 		# position for easy reference. Return back to zero scroll with the 'A'
 		# key.
 		ypos = len(self.__main) + len(self.__pages["PROCESS"]) + 5
 		header = "{:<10} | genes {} -->".format(
-			"pidx", data_format(self.__proc_gene_scroll)
+			"pidx", self.__data_format(self.__proc_gene_scroll)
 		)
 		self.__clear_line(ypos)
 		self.__print_header(ypos, header)
@@ -791,12 +811,88 @@ class Printer:
 					attr = curses.A_NORMAL
 
 				# Assemble and print the next table row.
-				row = "{:<10} |".format(data_format(proc_id))
+				row = "{:<10} |".format(self.__data_format(proc_id))
 				self.__print_line(ypos, row, attr)
 				self.__print_proc_gene(ypos, proc_id)
 
 			proc_id += 1
 			ypos += 1
+
+	def __print_buffer(self, ypos, buff):
+		""" Print contents of a network buffer as a list of instruction
+		symbols.
+		"""
+		if not ypos < self.size[0]:
+			return
+
+		if not len(buff):
+			self.__print_line(ypos, "---")
+			return
+
+		xpos = 1
+		bpos = self.__common_buffer_scroll
+		self.__clear_line(ypos)
+
+		while xpos < self.size[1] - 1 and bpos < len(buff):
+			symbol = self.inst_list[int(buff[bpos])][1]
+			self.screen.addstr(ypos, xpos, symbol)
+			xpos += 1
+			bpos += 1
+
+	def __print_common_widget(
+		self, ypos_s, ypos_b, head_s, head_b, sockets, buff, sources=False
+	):
+		""" Print data pertaining input or output network buffers, sources and
+		targets.
+		"""
+		self.__print_header(ypos_s, head_s)
+
+		# Socket info is stored differently for input and output.
+		if sources:
+			fmt_sock = lambda s: "{} {}".format(*s.getsockname())
+		else:
+			fmt_sock = lambda s: "{} {}".format(*s)
+
+		# Print active socket list.
+		if sockets:
+			for socket in sockets:
+				ypos_s += 1
+				self.__print_line(ypos_s, fmt_sock(socket))
+		else:
+			self.__print_line(ypos_s + 1, "---")
+
+		# Print current contents of the network buffer.
+		self.__clear_line(ypos_b)
+		self.__print_header(ypos_b, "{:<10} | {} -->".format(
+			head_b, self.__data_format(self.__common_buffer_scroll)
+		))
+		self.__clear_line(ypos_b + 1)
+		self.__print_buffer(ypos_b + 1, buff)
+
+	def __print_common_data(self):
+		""" Print active socket list and network buffer data.
+		"""
+		ypos_src = len(self.__main) + len(self.__pages["COMMON"]) + 5
+		ypos_tgt = ypos_src + max(3, len(self.__sim.common.sources) + 2)
+		ypos_ibf = ypos_tgt + max(3, len(self.__sim.common.targets) + 2)
+		ypos_obf = ypos_ibf + 3
+		self.__print_common_widget(
+			ypos_src,
+			ypos_ibf,
+			"SOURCES",
+			"IN BUFFER",
+			self.__sim.common.sources,
+			self.__sim.common.in_buffer,
+			sources=True,
+		)
+		self.__print_common_widget(
+			ypos_tgt,
+			ypos_obf,
+			"TARGETS",
+			"OUT BUFFER",
+			self.__sim.common.targets,
+			self.__sim.common.out_buffer,
+		)
 
 	def __print_proc_list(self):
 		""" Print list of process genomes or process data elements in PROCESS

@@ -35,13 +35,13 @@ class Handler:
 		"""
 		self.__sim = sim
 		self.__printer = sim.printer
-		self.__inst_dict = self.__get_inst_dict()
 		self.__min_commands = [
 			ord("M"),
 			ord(" "),
 			curses.KEY_RESIZE,
 			self.KEY_ESCAPE,
 		]
+		self.inst_dict = self.__get_inst_dict()
 		self.console_history = []
 
 		# Set short delay for ESCAPE key (which is used to exit the simulator).
@@ -82,9 +82,11 @@ class Handler:
 		elif cmd == ord("a"):
 			self.__printer.world.pan_left()
 			self.__printer.proc_scroll_left()
+			self.__printer.comm_scroll_left()
 		elif cmd == ord("d"):
 			self.__printer.world.pan_right()
 			self.__printer.proc_scroll_right()
+			self.__printer.comm_scroll_right()
 		elif cmd == ord("s"):
 			self.__printer.world.pan_down()
 			self.__printer.proc_scroll_down()
@@ -103,6 +105,7 @@ class Handler:
 		elif cmd == ord("A"):
 			self.__printer.world.pan_reset()
 			self.__printer.proc_scroll_horizontal_reset()
+			self.__printer.comm_scroll_horizontal_reset()
 		elif cmd == ord("o"):
 			self.__printer.proc_select_prev()
 		elif cmd == ord("p"):
@@ -166,6 +169,20 @@ class Handler:
 					self.__on_save(command)
 				elif command[0] in ["a", "auto"]:
 					self.__on_set_autosave(command)
+				elif command[0] in ["l", "link"]:
+					self.__on_link_to_self(command)
+				elif command[0] in ["source"]:
+					self.__on_add_source(command)
+				elif command[0] in ["target"]:
+					self.__on_add_target(command)
+				elif command[0] in ["rem_source"]:
+					self.__on_remove_source(command)
+				elif command[0] in ["rem_target"]:
+					self.__on_remove_target(command)
+				elif command[0] in ["net_load"]:
+					self.__on_network_load(command)
+				elif command[0] in ["net_save"]:
+					self.__on_network_save(command)
 				else:
 					# Raise if a non-existing command has been given.
 					self.__raise("Invalid command: '{}'".format(command[0]))
@@ -203,8 +220,7 @@ class Handler:
 		time_max = time.time() + self.CYCLE_TIMEOUT
 
 		for _ in range(factor):
-			self.__sim.lib.sal_main_cycle()
-			self.__sim.check_autosave()
+			self.__sim.cycle()
 
 			if time.time() > time_max:
 				break
@@ -255,7 +271,7 @@ class Handler:
 
 			for symbol in genome:
 				self.__sim.lib.sal_mem_set_inst(
-					address, self.__inst_dict[symbol]
+					address, self.inst_dict[symbol]
 				)
 				address += 1
 
@@ -269,7 +285,7 @@ class Handler:
 
 		# All characters in file must be actual instruction symbols.
 		for character in command[1]:
-			if character not in self.__inst_dict:
+			if character not in self.inst_dict:
 				self.__raise("Invalid symbol '{}' found on stream".format(
 					character
 				))
@@ -298,7 +314,7 @@ class Handler:
 
 		# All characters in file must be actual instruction symbols.
 		for character in genome:
-			if character not in self.__inst_dict:
+			if character not in self.inst_dict:
 				self.__raise("Invalid symbol '{}' found on '{}'".format(
 					character, gen_file
 				))
@@ -364,6 +380,8 @@ class Handler:
 		#
 		output = {}
 		exec(" ".join(command[1:]), locals(), output)
+		self.__sim.printer.screen.clear()
+		self.__sim.printer.print_page()
 
 		if output:
 			self.__respond("EXEC RESPONDS: {}".format(str(output)))
@@ -433,3 +451,70 @@ class Handler:
 			self.__raise("Invalid parameters for '{}'".format(command[0]))
 
 		self.__sim.set_autosave(int(command[1], 0))
+
+	def __on_link_to_self(self, command):
+		""" Add self as network target and source.
+		"""
+		if len(command) != 2:
+			self.__raise("Invalid parameters for '{}'".format(command[0]))
+
+		port = int(command[1])
+		self.__sim.common.link_to_self(int(command[1]))
+
+	def __on_add_source(self, command):
+		""" Add new network source.
+		"""
+		if len(command) != 3:
+			self.__raise("Invalid parameters for '{}'".format(command[0]))
+
+		address = command[1]
+		port = int(command[2])
+		self.__sim.common.add_source(address, port)
+
+	def __on_add_target(self, command):
+		""" Add new network target.
+		"""
+		if len(command) != 3:
+			self.__raise("Invalid parameters for '{}'".format(command[0]))
+
+		address = command[1]
+		port = int(command[2])
+		self.__sim.common.add_target(address, port)
+
+	def __on_remove_source(self, command):
+		""" Remove existing network source.
+		"""
+		if len(command) != 3:
+			self.__raise("Invalid parameters for '{}'".format(command[0]))
+
+		address = command[1]
+		port = int(command[2])
+		self.__sim.common.remove_source(address, port)
+
+	def __on_remove_target(self, command):
+		""" Remove existing network target.
+		"""
+		if len(command) != 3:
+			self.__raise("Invalid parameters for '{}'".format(command[0]))
+
+		address = command[1]
+		port = int(command[2])
+		self.__sim.common.remove_target(address, port)
+
+	def __on_network_load(self, command):
+		""" Load network settings from JSON file (located on network settings
+		directory.
+		"""
+		if len(command) != 2:
+			self.__raise("Invalid parameters for '{}'".format(command[0]))
+
+		self.__sim.common.load_network_config(command[1])
+
+	def __on_network_save(self, command):
+		""" Save network settings to a JSON file (which will be placed on the
+		network settings directory).
+		"""
+		if len(command) != 2:
+			self.__raise("Invalid parameters for '{}'".format(command[0]))
+
+		self.__sim.common.save_network_config(command[1])

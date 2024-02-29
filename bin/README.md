@@ -53,8 +53,15 @@ control some aspects of the simulation.
 |`s \| scroll`  |value    |---       |Scroll to Nth process or memory address |
 |`p \| process` |id       |---       |Select process by ID |
 |`r \| rename`  |name     |---       |Give simulation a new name |
-|`s \| save`    |---      |---       |Save simulation |
+|`save`         |---      |---       |Save simulation |
 |`a \| auto`    |interval |---       |Set simulation's auto-save interval |
+|`l \| link`    |port     |---       |Add localhost as common source and target |
+|`source`       |address  |port      |Add a common source |
+|`target`       |address  |port      |Add a common target |
+|`rem_source`   |address  |port      |Remove an existing common source |
+|`rem_target`   |address  |port      |Remove an existing common target |
+|`net_load`     |file     |---       |Load network settings from file |
+|`net_save`     |file     |---       |Save network settings to a file |
 
 ### Color Legend
 In WORLD view, as well as in PROCESS view (when gene mode is selected), each

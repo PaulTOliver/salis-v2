@@ -1,5 +1,7 @@
+TODO.md
 bin/__pycache__/*
 bin/modules/__pycache__/*
+bin/network/*.json
 bin/error.log
 bin/lib/libsalis-*.so
 bin/sims/*.sim
