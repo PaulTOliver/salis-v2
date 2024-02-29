@@ -310,6 +310,10 @@ class Printer:
 			if cmd in [curses.KEY_RESIZE, self.ESCAPE_KEY]:
 				console.clear()
 				return EXIT
+			# Provide general code for back-space key, in case it's not
+			# correctly defined.
+			elif cmd in [127, curses.KEY_BACKSPACE]:
+				return curses.KEY_BACKSPACE
 			elif cmd == curses.KEY_UP:
 				access_history("up")
 			elif cmd == curses.KEY_DOWN:
