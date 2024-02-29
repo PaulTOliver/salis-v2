@@ -19,7 +19,7 @@ $ ./bin/salis.py load --file 16.sim
 |Left/Right arrow |Previous/next page |
 |Up/Down arrows   |Scroll page up/down if it can't fit terminal |
 |`wasd`           |Scroll/pan (PROCESS and WORLD page) |
-|`S`              |Scroll to top (PROCESS and WORLD page) |
+|`Q`              |Scroll to top (PROCESS and WORLD page) |
 |`A`              |Scroll to left (PROCESS page) |
 |`zx`             |Zoom in/out (WORLD page) |
 |`i`              |Toggle IP view (WORLD page) |
