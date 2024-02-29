@@ -6,11 +6,12 @@ Email: paul.t.oliver.design@gmail.com
 
 This module should be considered an extension of the 'printer' module. It takes
 care of getting a pre-redered image from Salis and post-processing it in order
-to print it into the curses screen. It also keeps track of user cntrollable
+to print it into the curses screen. It also keeps track of user controllable
 rendering parameters (position and zoom).
 """
 
 import curses
+
 from ctypes import c_uint8, cast, POINTER
 
 
@@ -146,6 +147,11 @@ class World:
 		"""
 		if self.__is_world_editable():
 			self.__show_ip = not self.__show_ip
+
+
+	###############################
+	# Private methods
+	###############################
 
 	def __set_world_colors(self):
 		""" Define color pairs for rendering the world. Each color has a

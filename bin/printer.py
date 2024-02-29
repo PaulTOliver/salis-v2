@@ -13,6 +13,7 @@ import curses
 import curses.textpad
 import os
 import time
+
 from collections import OrderedDict
 from ctypes import c_uint8, c_uint32, cast, POINTER
 from handler import Handler
@@ -393,6 +394,11 @@ class Printer:
 		elif self.current_page == "PROCESS":
 			self.__print_proc_list()
 
+
+	###############################
+	# Private methods
+	###############################
+
 	def __set_colors(self):
 		""" Define the color pairs for the data printer.
 		"""
@@ -489,8 +495,9 @@ class Printer:
 		represents a PAGE. We initialize all pages inside an ordered dictionary
 		object.
 		"""
-		# The following widgets help up print special sets of data elements.
-		# The use of nested lambdas is needed to receive updated values.
+		# The following comprehensions build up widgets to help up print sets
+		# of data elements. The use of nested lambdas is needed to receive
+		# updated values.
 		# Instruction counter widget:
 		inst_widget = [("e", inst[0], (lambda j: (
 			lambda: self.__sim.lib.sal_mem_get_inst_count(j)
