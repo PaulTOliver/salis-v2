@@ -1,8 +1,8 @@
 bin/__pycache__/*
 bin/common/pipe
 bin/error.log
-bin/lib/libsalis.so
+bin/lib/libsalis-*.so
 bin/sims/*.sim
 bin/sims/auto/*.auto.gz
-build/*.d
-build/*.o
+build/**/*.d
+build/**/*.o
