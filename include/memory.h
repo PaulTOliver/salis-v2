@@ -82,19 +82,6 @@ SALIS_API void sal_mem_set_inst(uint32 address, uint8 inst);
 */
 SALIS_API uint8 sal_mem_get_byte(uint32 address);
 
-/** Render a 1D image of a given block of memory. This is useful, as rendering
-* directly in python would be too slow. We use openmp for multi-threaded image
-* generation.
-*
-* @param origin Low bound of rendered image
-* @param cell_size Amount of bytes per rendered pixel (cell)
-* @param buff_size Amount of pixels (cells) to be generated
-* @param buffer Pre-allocated buffer to store the rendered pixels into
-*/
-SALIS_API void sal_mem_render_image(
-	uint32 origin, uint32 cell_size, uint32 buff_size, uint8_p buffer
-);
-
 void _sal_mem_cycle(void);
 
 #endif

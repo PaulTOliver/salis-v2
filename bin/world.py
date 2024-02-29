@@ -41,7 +41,7 @@ class World:
 		line_width = self.__printer.size[1] - self.PADDING
 		print_area = self.__printer.size[0] * line_width
 		c_buffer = (c_uint8 * print_area)()
-		self.__sim.lib.sal_mem_render_image(
+		self.__sim.lib.sal_ren_get_image(
 			self.pos, self.zoom, print_area, cast(c_buffer, POINTER(c_uint8))
 		)
 

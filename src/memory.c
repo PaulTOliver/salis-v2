@@ -7,8 +7,6 @@
 #include "instset.h"
 #include "memory.h"
 
-#define MAX_ZOOM 0x10000
-
 static boolean g_is_init;
 static uint32 g_order;
 static uint32 g_size;
@@ -183,52 +181,6 @@ uint8 sal_mem_get_byte(uint32 address)
 	assert(g_is_init);
 	assert(sal_mem_is_address_valid(address));
 	return g_memory[address];
-}
-
-void sal_mem_render_image(
-	uint32 origin, uint32 cell_size, uint32 buff_size, uint8_p buffer
-) {
-	/* Render a 1D image of a given section of memory, at a given resolution
-	(zoom) and store it in a pre-allocated 'buffer'.
-
-	On the Salis python handler we draw memory as a 1D 'image' on the WORLD
-	page. If we were to render this image directly on python, it would be
-	excruciatingly slow, as we have to iterate over large areas of memory!
-	Therefore, this memory module comes with a built-in, super fast renderer.
-	*/
-	uint32 i;
-	assert(g_is_init);
-	assert(sal_mem_is_address_valid(origin));
-	assert(cell_size);
-	assert(cell_size <= MAX_ZOOM);
-	assert(buff_size);
-	assert(buffer);
-
-	/* We make use of openmp for multi-threaded looping. This allows even
-	faster render times, wherever openmp is supported.
-	*/
-	#pragma omp parallel for
-	for (i = 0; i < buff_size; i++) {
-		uint32 j;
-		uint32 inst_sum = 0;
-		uint32 alloc_found = 0;
-		uint32 cell_addr = origin + (i * cell_size);
-
-		for (j = 0; j < cell_size; j++) {
-			uint32 address = j + cell_addr;
-
-			if (sal_mem_is_address_valid(address)) {
-				inst_sum += sal_mem_get_inst(address);
-
-				if (sal_mem_is_allocated(address)) {
-					alloc_found = ALLOCATED_FLAG;
-				}
-			}
-		}
-
-		buffer[i] = (uint8)(inst_sum / cell_size);
-		buffer[i] |= (uint8)(alloc_found);
-	}
 }
 
 static boolean inst_count_is_correct(void)
