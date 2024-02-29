@@ -510,13 +510,12 @@ static void toggle_ip_flag(void (*toggler)(uint32 address))
 
 static void on_fault(uint32 pidx)
 {
-	/* Organisms get punished whenever they execute an invalid instruction
-	(commit a 'fault') by having the halt one simulation cycle.
+	/* For now, faults do nothing.
 	*/
 	assert(g_is_init);
 	assert(pidx < g_capacity);
 	assert(!sal_proc_is_free(pidx));
-	g_procs[pidx].punish = 1;
+	(void)pidx;
 }
 
 static void increment_ip(uint32 pidx)
@@ -995,6 +994,12 @@ static void one_reg_op(uint32 pidx, uint8 inst)
 	case DECN:
 		(*reg)--;
 		break;
+	case SHFL:
+		(*reg) <<= 1;
+		break;
+	case SHFR:
+		(*reg) >>= 1;
+		break;
 	case ZERO:
 		(*reg) = 0;
 		break;
@@ -1266,188 +1271,82 @@ pop(uint32 pidx)
 	increment_ip(pidx);
 }
 
-static boolean eat_seek(uint32 pidx, boolean forward)
-{
-	/* Search (via the seeker pointer) for an identical copy of the memory
-	stream right in front of the calling organism's IP. This function gets
-	called by organisms each cycle during an EAT instruction. Only when a valid
-	copy is found, this function will return TRUE. */
-	uint32 next_addr;
-	uint8 next_inst;
-	uint8 sp_inst;
-	assert(g_is_init);
-	assert(pidx < g_capacity);
-	assert(!sal_proc_is_free(pidx));
-	next_addr = g_procs[pidx].ip + 1;
-
-	if (!sal_mem_is_address_valid(next_addr)) {
-		on_fault(pidx);
-		increment_ip(pidx);
-		return FALSE;
-	}
-
-	/* Processes may only eat code copies from memory areas that are either
-	deallocated or owned by them (i.e. writeable).
-	*/
-	if (
-		!is_writeable_by(pidx, g_procs[pidx].sp) ||
-		g_procs[pidx].sp == next_addr
-	) {
-		increment_sp(pidx, forward);
-		return FALSE;
-	}
-
-	next_inst = sal_mem_get_inst(next_addr);
-	sp_inst = sal_mem_get_inst(g_procs[pidx].sp);
-
-	if (next_inst == sp_inst) {
-		return TRUE;
-	}
-
-	increment_sp(pidx, forward);
-	return FALSE;
-}
-
-static void eat(uint32 pidx)
-{
-	/* Salisian organisms may 'eat' information. They eat by searching for
-	'copies' of the code in front of their IPs during the EAT instruction. When
-	a valid copy is found, an organism gets rewarded by setting their 'reward'
-	field to the length of the measured copy. Each cycle, organisms execute
-	'reward' number of instructions plus one, thus, eating a larger stream
-	produces a larger advantage for an organism.
-
-	However, whenever an organism eats, the detected copy of the source code
-	gets destroyed (randomized). The main idea of the EAT instruction is to
-	turn 'information' into a valuable resource in Salis. Organisms,
-	nonetheless, may only eat information which they have 'write' access to.
-	*/
-	uint32 source;
-	uint32 target;
-	assert(g_is_init);
-	assert(pidx < g_capacity);
-	assert(!sal_proc_is_free(pidx));
-	source = g_procs[pidx].ip + 1;
-	target = g_procs[pidx].sp;
-	assert(sal_mem_is_address_valid(source));
-	assert(sal_mem_get_inst(source) == sal_mem_get_inst(target));
-	g_procs[pidx].reward = 0;
-
-	while (
-		sal_mem_is_address_valid(source) &&
-		sal_mem_is_address_valid(target) &&
-		sal_mem_get_inst(source) == sal_mem_get_inst(target)
-	) {
-		g_procs[pidx].reward++;
-		_sal_evo_randomize_at(target);
-		source++;
-		target++;
-	}
-
-	increment_ip(pidx);
-}
-
 static void proc_cycle(uint32 pidx)
 {
-	/* Cycle a process once. During each process cycle, several things may
-	happen. For example, if a process is being punished (for committing a
-	fault), it will have to wait until the next simulation cycle to be able to
-	execute.
-
-	Non-punished organisms execute at least one instruction per simulation
-	cycle. If they are being rewarded, they execute one, plus the number on
-	their 'reward' field, number of instructions each cycle.
+	/* Cycle a process once. Organisms will always execute one instruction per
+	simulation cycle.
 	*/
-	uint32 cycles;
+	uint8 inst;
 	assert(g_is_init);
 	assert(pidx < g_capacity);
 	assert(!sal_proc_is_free(pidx));
 
-	/* Organism is being punished. Clear its 'punish' field and return without
-	executing.
-	*/
-	if (g_procs[pidx].punish) {
-		g_procs[pidx].punish = 0;
-		return;
-	}
+	inst = sal_mem_get_inst(g_procs[pidx].ip);
+	g_instructions_executed++;
 
-	/* Execute one instruction per number of 'reward' points awarded to this
-	organism. Switch case associates each instruction to its corresponding
-	instruction handler. Process module keeps track of the total number of
-	instructions executed (by all organisms) per simulation cycle.
-	*/
-	for (cycles = 0; cycles < g_procs[pidx].reward + 1; cycles++) {
-		uint8 inst = sal_mem_get_inst(g_procs[pidx].ip);
-		g_instructions_executed++;
-
-		switch (inst) {
-		case JMPB:
-			if (jump_seek(pidx, FALSE)) jump(pidx);
-			break;
-		case JMPF:
-			if (jump_seek(pidx, TRUE)) jump(pidx);
-			break;
-		case ADRB:
-			if (addr_seek(pidx, FALSE)) addr(pidx);
-			break;
-		case ADRF:
-			if (addr_seek(pidx, TRUE)) addr(pidx);
-			break;
-		case MALB:
-			alloc(pidx, FALSE);
-			break;
-		case MALF:
-			alloc(pidx, TRUE);
-			break;
-		case SWAP:
-			swap(pidx);
-			break;
-		case SPLT:
-			split(pidx);
-			break;
-		case INCN:
-		case DECN:
-		case ZERO:
-		case UNIT:
-		case NOTN:
-			one_reg_op(pidx, inst);
-			break;
-		case IFNZ:
-			if_not_zero(pidx);
-			break;
-		case SUMN:
-		case SUBN:
-		case MULN:
-		case DIVN:
-			three_reg_op(pidx, inst);
-			break;
-		case LOAD:
-			load(pidx);
-			break;
-		case WRTE:
-			write(pidx);
-			break;
-		case SEND:
-			send(pidx);
-			break;
-		case RECV:
-			receive(pidx);
-			break;
-		case PSHN:
-			push(pidx);
-			break;
-		case POPN:
-			pop(pidx);
-			break;
-		case EATB:
-			if (eat_seek(pidx, FALSE)) eat(pidx);
-			break;
-		case EATF:
-			if (eat_seek(pidx, TRUE)) eat(pidx);
-			break;
-		default:
-			increment_ip(pidx);
-		}
+	switch (inst) {
+	case JMPB:
+		if (jump_seek(pidx, FALSE)) jump(pidx);
+		break;
+	case JMPF:
+		if (jump_seek(pidx, TRUE)) jump(pidx);
+		break;
+	case ADRB:
+		if (addr_seek(pidx, FALSE)) addr(pidx);
+		break;
+	case ADRF:
+		if (addr_seek(pidx, TRUE)) addr(pidx);
+		break;
+	case MALB:
+		alloc(pidx, FALSE);
+		break;
+	case MALF:
+		alloc(pidx, TRUE);
+		break;
+	case SWAP:
+		swap(pidx);
+		break;
+	case SPLT:
+		split(pidx);
+		break;
+	case INCN:
+	case DECN:
+	case SHFL:
+	case SHFR:
+	case ZERO:
+	case UNIT:
+	case NOTN:
+		one_reg_op(pidx, inst);
+		break;
+	case IFNZ:
+		if_not_zero(pidx);
+		break;
+	case SUMN:
+	case SUBN:
+	case MULN:
+	case DIVN:
+		three_reg_op(pidx, inst);
+		break;
+	case LOAD:
+		load(pidx);
+		break;
+	case WRTE:
+		write(pidx);
+		break;
+	case SEND:
+		send(pidx);
+		break;
+	case RECV:
+		receive(pidx);
+		break;
+	case PSHN:
+		push(pidx);
+		break;
+	case POPN:
+		pop(pidx);
+		break;
+	default:
+		increment_ip(pidx);
 	}
 }
 

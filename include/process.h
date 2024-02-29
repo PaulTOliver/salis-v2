@@ -5,8 +5,7 @@
 * This module allows access to Salis processes, or procs. Procs are the actual
 * organisms in the simulation. They consist of a virtual CPU with 4 registers
 * and a stack of 8. The instruction pointer (IP) and seeker pointer (SP)
-* coordinate the execution of all instructions. Organisms get rewarded or
-* punished, depending on certain conditions.
+* coordinate the execution of all instructions.
 */
 
 #ifndef SALIS_PROCESS_H
@@ -21,8 +20,6 @@ struct Process
 	SALIS_PROC_ELEMENT uint32 mb1s;
 	SALIS_PROC_ELEMENT uint32 mb2a;
 	SALIS_PROC_ELEMENT uint32 mb2s;
-	SALIS_PROC_ELEMENT uint32 reward;
-	SALIS_PROC_ELEMENT uint32 punish;
 	SALIS_PROC_ELEMENT uint32 ip;
 	SALIS_PROC_ELEMENT uint32 sp;
 	SALIS_PROC_ELEMENT uint32 rax;
