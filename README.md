@@ -100,9 +100,19 @@ genetic data may easily travel through a local or wide area network.
 |`PSHN` |`#` |1 |Push value to stack |
 |`POPN` |`~` |1 |Pop value from stack |
 
-Instructions with arguments *must* be followed by a minimum number of register
-modifiers equal to the instruction's parameters. Otherwise the instruction will
-cause a fault.
+Instructions that modify values on registers may be followed by up to 3
+register modifiers (`r[0]`, `r[1]` and `r[2]`). When not enough modifiers are
+present after a given instruction, remaining registers are set to `rax` (table
+below shows some examples).
+
+|Sample |`r[0]` |`r[1]` |`r[2]` |Meaning |
+|:------|:-----|:-----|:-----|-:|
+|`+bcd` |`rbx` |`rcx` |`rdx` |`rbx = rcx + rdx` |
+|`-bb`  |`rbx` |`rbx` |`rax` |`rbx = rbx - rax` |
+|`*`    |`rax` |`rax` |`rax` |`rax = rax * rax` |
+|`!c`   |`rcx` |---   |---   |`rcx = !rcx` |
+|`]b..` |`rbx` |---   |---   |`rbx = address of closest following ::` |
+|`[::`  |`rax` |---   |---   |`rax = address of closest previous ..` |
 
 ### Installing SALIS
 You'll need a C compiler (GCC) and python 3. A sample makefile is provided
