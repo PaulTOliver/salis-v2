@@ -25,6 +25,8 @@ import curses
 
 
 class Handler:
+	KEY_ESCAPE = 27
+
 	def __init__(self, sim):
 		""" Handler constructor. Simply link this class to the main simulation
 		class and printer class and create symbol dictionary.
@@ -32,8 +34,16 @@ class Handler:
 		self.__sim = sim
 		self.__printer = sim.printer
 		self.__inst_dict = self.__get_inst_dict()
-		self.__min_commands = [ord("M"), ord(" "), curses.KEY_RESIZE]
+		self.__min_commands = [
+			ord("M"),
+			ord(" "),
+			curses.KEY_RESIZE,
+			self.KEY_ESCAPE,
+		]
 		self.console_history = []
+
+		# Set short delay for ESCAPE key (which is used to exit the simulator).
+		os.environ.setdefault("ESCDELAY", "25")
 
 	def process_cmd(self, cmd):
 		""" Process incoming commands from curses. Commands are received via
@@ -44,7 +54,9 @@ class Handler:
 		if self.__sim.minimal and cmd not in self.__min_commands:
 			return
 
-		if cmd == ord("M"):
+		if cmd == self.KEY_ESCAPE:
+			self.__on_quit([None], save=True)
+		elif cmd == ord("M"):
 			self.__printer.screen.clear()
 			self.__sim.minimal = not self.__sim.minimal
 		elif cmd == ord(" "):
