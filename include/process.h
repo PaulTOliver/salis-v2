@@ -56,11 +56,6 @@ SALIS_API uint32 sal_proc_get_first(void);
 */
 SALIS_API uint32 sal_proc_get_last(void);
 
-/** Get instructions executed on last cycle.
-* @return Amount of executed instructions during the last cycle
-*/
-SALIS_API uint32 sal_proc_get_instructions_executed(void);
-
 /** Check if process is currently free.
 * @param proc_id ID of process whose status we want to check
 * @return Status (either free or running) of the process with the given ID

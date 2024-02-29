@@ -521,9 +521,6 @@ class Printer:
 				("e", "capacity", self.__sim.lib.sal_proc_get_capacity),
 				("e", "first", self.__sim.lib.sal_proc_get_first),
 				("e", "last", self.__sim.lib.sal_proc_get_last),
-				("e", "exec",
-					self.__sim.lib.sal_proc_get_instructions_executed
-				),
 			]),
 			("WORLD", [
 				("e", "position", lambda: self.world.pos),
