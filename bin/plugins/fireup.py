@@ -41,11 +41,9 @@ parser.add_argument(
 )
 args = parser.parse_args()
 
-
 # Store the path of this script and the main Salis simulation script.
 path = os.path.dirname(__file__)
 salis = os.path.join(path, "../salis.py")
-
 
 # Revise that *all* listed files exist inside the './bin/sims/' directory.
 # Otherwise throw an exception.
@@ -55,11 +53,9 @@ for fname in args.files:
 	if not os.path.isfile(abs_path):
 		parser.error("Save file '{}' not found.".format(abs_path))
 
-
 # Also, check that no file names are repeated.
 if len(args.files) != len(set(args.files)):
 	parser.error("Repeated file name detected.")
-
 
 # Everything seems OK! Let's fire up the TMUX sessions, one for every saved
 # file. Tmux sessions will be named similarly to their contained simulations.
@@ -71,7 +67,7 @@ for fname in args.files:
 	session = "salis-{}".format(fname).replace(".", "-")
 	salis_cmd = "{} load -f {} -a {}".format(salis, fname, args.auto)
 	subprocess.run(["tmux", "new-session", "-d", "-s", session])
-	subprocess.run(["tmux", "send-keys", "-t", session, "{}".format(salis_cmd)])
+	subprocess.run(["tmux", "send-keys", "-t", session, salis_cmd])
 	subprocess.run(["tmux", "send-keys", "-t", session, "Enter", "Space"])
 	print("New tmux session '{}' is running '{}' in the background.".format(
 		session, fname
