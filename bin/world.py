@@ -113,18 +113,25 @@ class World:
 			max_pos = self.__sim.lib.sal_mem_get_size() - 1
 			self.pos = min(self.pos + self.zoom, max_pos)
 
-	def pan_down(self):
-		""" Pan world downward (pos += zoom * columns).
+	def pan_down(self, fast=False):
+		""" Pan world downward.
 		"""
 		if self.__is_world_editable():
-			self.pos = max(self.pos - self.__get_line_area(), 0)
+			if fast:
+				self.pos = max(self.pos - self.__get_world_area(), 0)
+			else:
+				self.pos = max(self.pos - self.__get_line_area(), 0)
 
-	def pan_up(self):
-		""" Pan world upward (pos -= zoom * columns).
+	def pan_up(self, fast=False):
+		""" Pan world upward.
 		"""
 		if self.__is_world_editable():
 			max_pos = self.__sim.lib.sal_mem_get_size() - 1
-			self.pos = min(self.pos + self.__get_line_area(), max_pos)
+
+			if fast:
+				self.pos = min(self.pos + self.__get_world_area(), max_pos)
+			else:
+				self.pos = min(self.pos + self.__get_line_area(), max_pos)
 
 	def pan_reset(self):
 		""" Set world position to zero.
@@ -265,3 +272,8 @@ class World:
 		line_size = self.__printer.size[1] - self.PADDING
 		line_area = self.zoom * line_size
 		return line_area
+
+	def __get_world_area(self):
+		""" Return amount of bytes contained in the entire WORLD view.
+		"""
+		return self.__get_line_area() * self.__printer.size[0]
