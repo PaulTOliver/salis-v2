@@ -9,8 +9,9 @@ static uint32 g_epoch;
 
 void sal_main_init(uint32 order)
 {
-	/* Initialize all Salis modules to their initial states. We pass along any
-	arguments to their respective modules.
+	/*
+	* Initialize all Salis modules to their initial states. We pass along any
+	* arguments to their respective modules.
 	*/
 	assert(!g_is_init);
 	_sal_mem_init(order);
@@ -21,10 +22,11 @@ void sal_main_init(uint32 order)
 
 void sal_main_quit(void)
 {
-	/* Reset Salis and all of its modules back to zero. We may, thus, shutdown
-	Salis and re-initialize it with different parameters without having to
-	reload the library (useful, for example, when running data gathering
-	scripts that must iterate through many save files).
+	/*
+	* Reset Salis and all of its modules back to zero. We may, thus, shutdown
+	* Salis and re-initialize it with different parameters without having to
+	* reload the library (useful, for example, when running data gathering
+	* scripts that must iterate through many save files).
 	*/
 	assert(g_is_init);
 	_sal_proc_quit();
@@ -37,8 +39,9 @@ void sal_main_quit(void)
 
 void sal_main_load(string file_name)
 {
-	/* Load simulation state from file. This file must have been created by
-	'sal_main_save()'.
+	/*
+	* Load simulation state from file. This file must have been created by
+	* 'sal_main_save()'.
 	*/
 	FILE *file;
 	assert(!g_is_init);
@@ -56,9 +59,10 @@ void sal_main_load(string file_name)
 
 void sal_main_save(string file_name)
 {
-	/* Save simulation state to a file. This file may later be re-loaded with
-	'sal_main_load()'. We save in binary format (to save space), which means
-	save files might not be entirely portable.
+	/*
+	* Save simulation state to a file. This file may later be re-loaded with
+	* 'sal_main_load()'. We save in binary format (to save space), which means
+	* save files might not be entirely portable.
 	*/
 	FILE *file;
 	assert(g_is_init);
@@ -76,21 +80,24 @@ void sal_main_save(string file_name)
 
 boolean sal_main_is_init(void)
 {
-	/* Check if Salis is currently initialized/running.
+	/*
+	* Check if Salis is currently initialized/running.
 	*/
 	return g_is_init;
 }
 
-/* Getter methods for the Salis main module.
+/*
+* Getter methods for the Salis main module.
 */
 UINT32_GETTER(main, cycle)
 UINT32_GETTER(main, epoch)
 
 void sal_main_cycle(void)
 {
-	/* Cycle the Salis simulator once. The combination of a cycle * epoch
-	counter allows us to track simulations for an insane period of time
-	(2^64 cycles).
+	/*
+	* Cycle the Salis simulator once. The combination of a cycle * epoch
+	* counter allows us to track simulations for an insane period of time
+	* (2^64 cycles).
 	*/
 	g_cycle++;
 
@@ -98,7 +105,8 @@ void sal_main_cycle(void)
 		g_epoch++;
 	}
 
-	/* Cycle all of the Salis modules.
+	/*
+	* Cycle all of the Salis modules.
 	*/
 	_sal_mem_cycle();
 	_sal_evo_cycle();

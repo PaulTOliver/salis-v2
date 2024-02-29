@@ -1,6 +1,6 @@
 """ SALIS: Viewer/controller for the SALIS simulator.
 
-file: handler.py
+File: handler.py
 Author: Paul Oliver
 Email: paul.t.oliver.design@gmail.com
 

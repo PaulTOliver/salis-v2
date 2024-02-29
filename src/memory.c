@@ -17,9 +17,10 @@ static uint8_p g_memory;
 
 void _sal_mem_init(uint32 order)
 {
-	/* Set memory module to its initial state. We calculate memory size based
-	on its order (size = 1 << order) and allocate an array of such size. We
-	also initialize the array completely to zero.
+	/*
+	* Set memory module to its initial state. We calculate memory size based
+	* on its order (size = 1 << order) and allocate an array of such size. We
+	* also initialize the array completely to zero.
 	*/
 	assert(!g_is_init);
 	assert(order < 32);
@@ -34,8 +35,9 @@ void _sal_mem_init(uint32 order)
 
 void _sal_mem_quit(void)
 {
-	/* Reset memory module entirely back to zero. That way, we can load several
-	simulations without restarting the application entirely.
+	/*
+	* Reset memory module entirely back to zero. That way, we can load several
+	* simulations without restarting the application entirely.
 	*/
 	assert(g_is_init);
 	free(g_memory);
@@ -50,7 +52,8 @@ void _sal_mem_quit(void)
 
 void _sal_mem_load_from(FILE *file)
 {
-	/* Load memory state from a binary file.
+	/*
+	* Load memory state from a binary file.
 	*/
 	assert(!g_is_init);
 	assert(file);
@@ -67,7 +70,8 @@ void _sal_mem_load_from(FILE *file)
 
 void _sal_mem_save_into(FILE *file)
 {
-	/* Save memory state to a binary file.
+	/*
+	* Save memory state to a binary file.
 	*/
 	assert(g_is_init);
 	assert(file);
@@ -80,7 +84,8 @@ void _sal_mem_save_into(FILE *file)
 	fwrite(g_memory, sizeof(uint8), g_size, file);
 }
 
-/* Getter methods for the memory module.
+/*
+* Getter methods for the memory module.
 */
 UINT32_GETTER(mem, order)
 UINT32_GETTER(mem, size)
@@ -89,8 +94,9 @@ UINT32_GETTER(mem, capacity)
 
 uint32 sal_mem_get_inst_count(uint8 inst)
 {
-	/* Return number of times a certain instruction appears in memory. The
-	instruction counter gets updated dynamically during each cycle.
+	/*
+	* Return number of times a certain instruction appears in memory. The
+	* instruction counter gets updated dynamically during each cycle.
 	*/
 	assert(g_is_init);
 	assert(sal_is_inst(inst));
@@ -99,8 +105,9 @@ uint32 sal_mem_get_inst_count(uint8 inst)
 
 boolean sal_mem_is_over_capacity(void)
 {
-	/* Check if memory is filled above 50%. If so, old organisms will be popped
-	out of the reaper queue!
+	/*
+	* Check if memory is filled above 50%. If so, old organisms will be popped
+	* out of the reaper queue!
 	*/
 	assert(g_is_init);
 	return g_allocated > g_capacity;
@@ -108,7 +115,8 @@ boolean sal_mem_is_over_capacity(void)
 
 boolean sal_mem_is_address_valid(uint32 address)
 {
-	/* Check if given address is valid.
+	/*
+	* Check if given address is valid.
 	*/
 	assert(g_is_init);
 	return address < g_size;
@@ -116,7 +124,8 @@ boolean sal_mem_is_address_valid(uint32 address)
 
 boolean sal_mem_is_allocated(uint32 address)
 {
-	/* Check if given address is allocated.
+	/*
+	* Check if given address is allocated.
 	*/
 	assert(g_is_init);
 	assert(sal_mem_is_address_valid(address));
@@ -125,7 +134,8 @@ boolean sal_mem_is_allocated(uint32 address)
 
 void _sal_mem_set_allocated(uint32 address)
 {
-	/* Set allocated flag on a given address.
+	/*
+	* Set allocated flag on a given address.
 	*/
 	assert(g_is_init);
 	assert(sal_mem_is_address_valid(address));
@@ -138,7 +148,8 @@ void _sal_mem_set_allocated(uint32 address)
 
 void _sal_mem_unset_allocated(uint32 address)
 {
-	/* Unset allocated flag on a given address.
+	/*
+	* Unset allocated flag on a given address.
 	*/
 	assert(g_is_init);
 	assert(sal_mem_is_address_valid(address));
@@ -151,8 +162,9 @@ void _sal_mem_unset_allocated(uint32 address)
 
 uint8 sal_mem_get_inst(uint32 address)
 {
-	/* Get instruction currently set on a specified address, with the allocated
-	bit flag turned off.
+	/*
+	* Get instruction currently set on a specified address, with the allocated
+	* bit flag turned off.
 	*/
 	assert(g_is_init);
 	assert(sal_mem_is_address_valid(address));
@@ -161,8 +173,9 @@ uint8 sal_mem_get_inst(uint32 address)
 
 void sal_mem_set_inst(uint32 address, uint8 inst)
 {
-	/* Set instruction at given address. This is useful when performing manual
-	memory manipulations (like compiling organism genomes).
+	/*
+	* Set instruction at given address. This is useful when performing manual
+	* memory manipulations (like compiling organism genomes).
 	*/
 	assert(g_is_init);
 	assert(sal_mem_is_address_valid(address));
@@ -175,8 +188,9 @@ void sal_mem_set_inst(uint32 address, uint8 inst)
 
 uint8 sal_mem_get_byte(uint32 address)
 {
-	/* Get unadulterated byte at given address. This could be used, for
-	example, to render nice images of the memory state.
+	/*
+	* Get unadulterated byte at given address. This could be used, for example,
+	* to render nice images of the memory state.
 	*/
 	assert(g_is_init);
 	assert(sal_mem_is_address_valid(address));
@@ -185,8 +199,9 @@ uint8 sal_mem_get_byte(uint32 address)
 
 static boolean inst_count_is_correct(void)
 {
-	/* Check that the instruction counter is in a valid state
-	(i.e. SUM inst_counter[0..(INST_COUNT - 1)] == memory_size).
+	/*
+	* Check that the instruction counter is in a valid state (i.e.
+	* SUM inst_counter[0..(INST_COUNT - 1)] == memory_size).
 	*/
 	uint32 i;
 	uint32 sum = 0;
@@ -202,9 +217,10 @@ static boolean inst_count_is_correct(void)
 
 static boolean module_is_valid(void)
 {
-	/* Check for validity of memory module. This function only gets called when
-	Salis is running in debug mode. It makes Salis **very** slow in comparison
-	to when running optimized, but it is also **very** useful for debugging!
+	/*
+	* Check for validity of memory module. This function only gets called when
+	* Salis is running in debug mode. It makes Salis **very** slow in comparison
+	* to when running optimized, but it is also **very** useful for debugging!
 	*/
 	uint32 bidx;
 	uint32 allocated = 0;
@@ -212,8 +228,9 @@ static boolean module_is_valid(void)
 	assert(g_capacity <= g_size / 2);
 	assert(inst_count_is_correct());
 
-	/* Iterate through all memory, counting the flags set on each address. We
-	then compare the sum to the flag counters to assert module validity.
+	/*
+	* Iterate through all memory, counting the flags set on each address. We
+	* then compare the sum to the flag counters to assert module validity.
 	*/
 	for (bidx = 0; bidx < g_size; bidx++) {
 		if (sal_mem_is_allocated(bidx)) {
@@ -227,8 +244,9 @@ static boolean module_is_valid(void)
 
 void _sal_mem_cycle(void)
 {
-	/* Cycle memory module. Simply assert validity when running in debug mode.
-	When running optimized, this function does nothing.
+	/*
+	* Cycle memory module. Simply assert validity when running in debug mode.
+	* When running optimized, this function does nothing.
 	*/
 	assert(g_is_init);
 	assert(module_is_valid());

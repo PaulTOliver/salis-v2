@@ -19,10 +19,11 @@ static Process *g_procs;
 
 void _sal_proc_init(void)
 {
-	/* Initialize process module to its initial state. We initialize the reaper
-	queue with a capacity of 1. 'First' and 'last' organism pointers are
-	initialized to (uint32)-1 (to indicate they point to no organism, as no
-	organism exists yet).
+	/*
+	* Initialize process module to its initial state. We initialize the reaper
+	* queue with a capacity of 1. 'First' and 'last' organism pointers are
+	* initialized to (uint32)-1 (to indicate they point to no organism, as no
+	* organism exists yet).
 	*/
 	assert(!g_is_init);
 	g_is_init = TRUE;
@@ -35,7 +36,8 @@ void _sal_proc_init(void)
 
 void _sal_proc_quit(void)
 {
-	/* Reset process module back to zero; free up the process queue.
+	/*
+	* Reset process module back to zero; free up the process queue.
 	*/
 	assert(g_is_init);
 	free(g_procs);
@@ -49,7 +51,8 @@ void _sal_proc_quit(void)
 
 void _sal_proc_load_from(FILE *file)
 {
-	/* Load process module state from a binary file.
+	/*
+	* Load process module state from a binary file.
 	*/
 	assert(!g_is_init);
 	assert(file);
@@ -65,7 +68,8 @@ void _sal_proc_load_from(FILE *file)
 
 void _sal_proc_save_into(FILE *file)
 {
-	/* Save process module state to a binary file.
+	/*
+	* Save process module state to a binary file.
 	*/
 	assert(g_is_init);
 	assert(file);
@@ -77,7 +81,8 @@ void _sal_proc_save_into(FILE *file)
 	fwrite(g_procs, sizeof(Process), g_capacity, file);
 }
 
-/* Getter methods for the process module.
+/*
+* Getter methods for the process module.
 */
 UINT32_GETTER(proc, count)
 UINT32_GETTER(proc, capacity)
@@ -86,18 +91,20 @@ UINT32_GETTER(proc, last)
 
 boolean sal_proc_is_free(uint32 proc_id)
 {
-	/* In Salis, the reaper queue is implemented as a circular queue. Thus, at
-	any given time, a process ID (which actually denotes a process 'address'
-	or, more correctly, a process 'container address') might contain a living
-	process or be empty. This function checks for the 'living' state of a given
-	process ID.
+	/*
+	* In Salis, the reaper queue is implemented as a circular queue. Thus, at
+	* any given time, a process ID (which actually denotes a process 'address'
+	* or, more correctly, a process 'container address') might contain a living
+	* process or be empty. This function checks for the 'living' state of a
+	* given process ID.
 	*/
 	assert(g_is_init);
 	assert(proc_id < g_capacity);
 
 	if (!g_procs[proc_id].mb1s) {
-		/* When running in debug mode, we make sure that non-living processes
-		are completely set to zero, as this is the expected state.
+		/*
+		* When running in debug mode, we make sure that non-living processes
+		* are completely set to zero, as this is the expected state.
 		*/
 		#ifndef NDEBUG
 			Process dummy_proc;
@@ -113,8 +120,9 @@ boolean sal_proc_is_free(uint32 proc_id)
 
 Process sal_proc_get_proc(uint32 proc_id)
 {
-	/* Get a **copy** (not a reference) of the process with the given ID. Note,
-	this might be a non-living process.
+	/*
+	* Get a **copy** (not a reference) of the process with the given ID. Note,
+	* this might be a non-living process.
 	*/
 	assert(g_is_init);
 	assert(proc_id < g_capacity);
@@ -123,11 +131,12 @@ Process sal_proc_get_proc(uint32 proc_id)
 
 void sal_proc_get_proc_data(uint32 proc_id, uint32_p buffer)
 {
-	/* Get a **copy** (not a reference) of the process with the given ID
-	(represented as a string of 32 bit integers) written into the given buffer.
-	The buffer must be pre-allocated to a large enough size
-	(i.e. malloc(sizeof(Process))). Note, copied process might be in a
-	non-living state.
+	/*
+	* Get a **copy** (not a reference) of the process with the given ID
+	* (represented as a string of 32 bit integers) written into the given
+	* buffer. The buffer must be pre-allocated to a large enough size (i.e.
+	* malloc(sizeof(Process))). Note, copied process might be in a non-living
+	* state.
 	*/
 	assert(g_is_init);
 	assert(proc_id < g_capacity);
@@ -137,8 +146,9 @@ void sal_proc_get_proc_data(uint32 proc_id, uint32_p buffer)
 
 static boolean block_is_free_and_valid(uint32 address, uint32 size)
 {
-	/* Iterate all addresses in the given memory block and check that they lie
-	within memory bounds and have the ALLOCATED flag unset.
+	/*
+	* Iterate all addresses in the given memory block and check that they lie
+	* within memory bounds and have the ALLOCATED flag unset.
 	*/
 	uint32 offset;
 
@@ -153,13 +163,14 @@ static boolean block_is_free_and_valid(uint32 address, uint32 size)
 
 static void realloc_queue(uint32 queue_lock)
 {
-	/* Reallocate reaper queue into a new circular queue with double the
-	capacity. This function gets called whenever the reaper queue fills up
-	with new organisms.
-
-	A queue_lock parameter may be provided, which 'centers' the reallocation on
-	a given process ID. This means that, after reallocating the queue, the
-	process with that ID will keep still have the same ID on the new queue.
+	/*
+	* Reallocate reaper queue into a new circular queue with double the
+	* capacity. This function gets called whenever the reaper queue fills up
+	* with new organisms.
+	*
+	* A queue_lock parameter may be provided, which 'centers' the reallocation
+	* on a given process ID. This means that, after reallocating the queue, the
+	* process with that ID will keep still have the same ID on the new queue.
 	*/
 	uint32 new_capacity;
 	Process *new_queue;
@@ -174,7 +185,8 @@ static void realloc_queue(uint32 queue_lock)
 	fwrd_idx = queue_lock;
 	back_idx = (queue_lock - 1) % new_capacity;
 
-	/* Copy all organisms that lie forward from queue lock.
+	/*
+	* Copy all organisms that lie forward from queue lock.
 	*/
 	while (TRUE) {
 		uint32 old_idx = fwrd_idx % g_capacity;
@@ -188,9 +200,10 @@ static void realloc_queue(uint32 queue_lock)
 		}
 	}
 
-	/* Copy all organisms that lie backwards from queue lock, making sure to
-	loop around the queue (with modulo '%') whenever the process index goes
-	below zero.
+	/*
+	* Copy all organisms that lie backwards from queue lock, making sure to
+	* loop around the queue (with modulo '%') whenever the process index goes
+	* below zero.
 	*/
 	if (queue_lock != g_first) {
 		while (TRUE) {
@@ -207,7 +220,8 @@ static void realloc_queue(uint32 queue_lock)
 		}
 	}
 
-	/* Free old reaper queue and re-link global pointer to new queue.
+	/*
+	* Free old reaper queue and re-link global pointer to new queue.
 	*/
 	free(g_procs);
 	g_capacity = new_capacity;
@@ -216,12 +230,14 @@ static void realloc_queue(uint32 queue_lock)
 
 static uint32 get_new_proc_from_queue(uint32 queue_lock)
 {
-	/* Retrieve an unoccupied process ID from the reaper queue. This function
-	gets called whenever a new organism is generated (born).
+	/*
+	* Retrieve an unoccupied process ID from the reaper queue. This function
+	* gets called whenever a new organism is generated (born).
 	*/
 	assert(g_is_init);
 
-	/* If reaper queue is full, reallocate to double its current size.
+	/*
+	* If reaper queue is full, reallocate to double its current size.
 	*/
 	if (g_count == g_capacity) {
 		realloc_queue(queue_lock);
@@ -243,18 +259,20 @@ static uint32 get_new_proc_from_queue(uint32 queue_lock)
 static void proc_create(uint32 address, uint32 size, uint32 queue_lock,
 	boolean allocate)
 {
-	/* Give birth to a new process! We must specify the address and size of the
-	new organism.
+	/*
+	* Give birth to a new process! We must specify the address and size of the
+	* new organism.
 	*/
 	uint32 pidx;
 	assert(g_is_init);
 	assert(sal_mem_is_address_valid(address));
 	assert(sal_mem_is_address_valid(address + size - 1));
 
-	/* When organisms are generated manually (by an user), we must explicitly
-	allocate its entire memory block. When organisms replicate by themselves,
-	we assume they have already allocated the child's memory, so we don't need
-	to do it here.
+	/*
+	* When organisms are generated manually (by an user), we must explicitly
+	* allocate its entire memory block. When organisms replicate by themselves,
+	* we assume they have already allocated the child's memory, so we don't
+	* need to do it here.
 	*/
 	if (allocate) {
 		uint32 offset;
@@ -266,8 +284,9 @@ static void proc_create(uint32 address, uint32 size, uint32 queue_lock,
 		}
 	}
 
-	/* Get a new process ID for the child process. Also, set initial state of
-	the child process data structure.
+	/*
+	* Get a new process ID for the child process. Also, set initial state of
+	* the child process data structure.
 	*/
 	pidx = get_new_proc_from_queue(queue_lock);
 	g_procs[pidx].mb1a = address;
@@ -278,8 +297,9 @@ static void proc_create(uint32 address, uint32 size, uint32 queue_lock,
 
 void sal_proc_create(uint32 address, uint32 mb1s)
 {
-	/* API function to create a new process. Memory address and size of new
-	process must be provided.
+	/*
+	* API function to create a new process. Memory address and size of new
+	* process must be provided.
 	*/
 	assert(g_is_init);
 	assert(block_is_free_and_valid(address, mb1s));
@@ -288,7 +308,8 @@ void sal_proc_create(uint32 address, uint32 mb1s)
 
 static void free_memory_block(uint32 address, uint32 size)
 {
-	/* Deallocate a memory block.
+	/*
+	* Deallocate a memory block.
 	*/
 	uint32 offset;
 	assert(sal_mem_is_address_valid(address));
@@ -306,7 +327,8 @@ static void free_memory_block(uint32 address, uint32 size)
 
 static void free_memory_owned_by(uint32 pidx)
 {
-	/* Free memory specifically owned by the process with the given ID.
+	/*
+	* Free memory specifically owned by the process with the given ID.
 	*/
 	assert(g_is_init);
 	assert(pidx < g_capacity);
@@ -314,7 +336,8 @@ static void free_memory_owned_by(uint32 pidx)
 	free_memory_block(g_procs[pidx].mb1a, g_procs[pidx].mb1s);
 
 	if (g_procs[pidx].mb2s) {
-		/* If process owns a child memory block, free it as well.
+		/*
+		* If process owns a child memory block, free it as well.
 		*/
 		free_memory_block(g_procs[pidx].mb2a, g_procs[pidx].mb2s);
 	}
@@ -322,7 +345,8 @@ static void free_memory_owned_by(uint32 pidx)
 
 static void proc_kill(void)
 {
-	/* Kill process on bottom of reaper queue (the oldest process).
+	/*
+	* Kill process on bottom of reaper queue (the oldest process).
 	*/
 	assert(g_is_init);
 	assert(g_count);
@@ -330,7 +354,8 @@ static void proc_kill(void)
 	assert(g_last != UINT32_MAX);
 	assert(!sal_proc_is_free(g_first));
 
-	/* Free up owned memory and reset process data structure back to zero.
+	/*
+	* Free up owned memory and reset process data structure back to zero.
 	*/
 	free_memory_owned_by(g_first);
 	memset(&g_procs[g_first], 0, sizeof(Process));
@@ -347,8 +372,9 @@ static void proc_kill(void)
 
 void sal_proc_kill(void)
 {
-	/* API function to kill a process. Make sure that at least one process is
-	alive, or 'assert()' will fail.
+	/*
+	* API function to kill a process. Make sure that at least one process is
+	* alive, or 'assert()' will fail.
 	*/
 	assert(g_is_init);
 	assert(g_count);
@@ -360,7 +386,8 @@ void sal_proc_kill(void)
 
 static boolean block_is_allocated(uint32 address, uint32 size)
 {
-	/* Assert that a given memory block is fully allocated.
+	/*
+	* Assert that a given memory block is fully allocated.
 	*/
 	uint32 offset;
 	assert(g_is_init);
@@ -376,9 +403,11 @@ static boolean block_is_allocated(uint32 address, uint32 size)
 
 static boolean proc_is_valid(uint32 pidx)
 {
-	/* Assert that the process with the given ID is in a valid state. This
-	means that all of its owned memory must be allocated and that the allocated
-	flags are set in place. IP and SP must be located in valid addresses.
+	/*
+	* Assert that the process with the given ID is in a valid state. This
+	* means that all of its owned memory must be allocated and that the
+	* allocated flags are set in place. IP and SP must be located in valid
+	* addresses.
 	*/
 	assert(g_is_init);
 	assert(pidx < g_capacity);
@@ -398,26 +427,29 @@ static boolean proc_is_valid(uint32 pidx)
 
 static boolean module_is_valid(void)
 {
-	/* Check for validity of process module. This function only gets called
-	when Salis is running in debug mode. It makes Salis **very** slow in
-	comparison to when running optimized, but it is also **very** useful for
-	debugging!
+	/*
+	* Check for validity of process module. This function only gets called when
+	* Salis is running in debug mode. It makes Salis **very** slow in
+	* comparison to when running optimized, but it is also **very** useful for
+	* debugging!
 	*/
 	uint32 pidx;
 	uint32 alloc_count = 0;
 	assert(g_is_init);
 
-	/* Check that each individual process is in a valid state. We can do this
-	in a multi-threaded way.
+	/*
+	* Check that each individual process is in a valid state. We can do this
+	* in a multi-threaded way.
 	*/
 	#pragma omp parallel for
 	for (pidx = 0; pidx < g_capacity; pidx++) {
 		assert(proc_is_valid(pidx));
 	}
 
-	/* Iterate all processes, counting their memory blocks and adding up their
-	memory block sizes. At the end, we compare the sums to the flag counters of
-	the memory module.
+	/*
+	* Iterate all processes, counting their memory blocks and adding up their
+	* memory block sizes. At the end, we compare the sums to the flag counters of
+	* the memory module.
 	*/
 	for (pidx = 0; pidx < g_capacity; pidx++) {
 		if (!sal_proc_is_free(pidx)) {
@@ -436,7 +468,8 @@ static boolean module_is_valid(void)
 
 static void on_fault(uint32 pidx)
 {
-	/* For now, faults do nothing.
+	/*
+	* For now, faults do nothing.
 	*/
 	assert(g_is_init);
 	assert(pidx < g_capacity);
@@ -446,8 +479,9 @@ static void on_fault(uint32 pidx)
 
 static void increment_ip(uint32 pidx)
 {
-	/* After executing each instruction, increment the given organism's IP to
-	the next valid address.
+	/*
+	* After executing each instruction, increment the given organism's IP to
+	* the next valid address.
 	*/
 	assert(g_is_init);
 	assert(pidx < g_capacity);
@@ -457,42 +491,49 @@ static void increment_ip(uint32 pidx)
 		g_procs[pidx].ip++;
 	}
 
-	/* Wherever IP goes, SP follows. :P
+	/*
+	* Wherever IP goes, SP follows. :P
 	*/
 	g_procs[pidx].sp = g_procs[pidx].ip;
 }
 
 static boolean are_templates_complements(uint32 source, uint32 complement)
 {
-	/* Check whether 2 templates are complements. Templates are introduced in
-	Salis-2.0 and they function in the same way as templates in the original
-	Tierra. They consist of string of NOP0 and NOP1 instructions.
-
-	We say that templates are complements whenever one is a 'negation' of
-	another (i.e. they are reverse copies of each other). So, on the following
-	example, the top template would be the complement of the bottom template.
-
-	>>> NOP0 - NOP1 - NOP1
-	>>> NOP1 - NOP0 - NOP0
-
-	This function looks into 2 given addresses in memory and checks whether
-	there are complementing templates on those addresses.
+	/*
+	* Check whether 2 templates are complements. Templates are introduced in
+	* Salis-2.0 and they function in the same way as templates in the original
+	* Tierra. They consist of string of NOP0 and NOP1 instructions.
+	*
+	* We say that templates are complements whenever one is a 'negation' of
+	* another (i.e. they are reverse copies of each other). So, on the
+	* following example, the top template would be the complement of the bottom
+	* template.
+	*
+	* >>> NOP0 - NOP1 - NOP1
+	* >>> NOP1 - NOP0 - NOP0
+	*
+	* This function looks into 2 given addresses in memory and checks whether
+	* there are complementing templates on those addresses.
 	*/
 	assert(g_is_init);
 	assert(sal_mem_is_address_valid(source));
 	assert(sal_mem_is_address_valid(complement));
 	assert(sal_is_template(sal_mem_get_inst(source)));
 
-	while (sal_mem_is_address_valid(source) &&
-			sal_is_template(sal_mem_get_inst(source))) {
-		/* Iterate address by address, checking complementarity on each
-		consecutive byte pair.
+	while (
+		sal_mem_is_address_valid(source) &&
+		sal_is_template(sal_mem_get_inst(source))
+	) {
+		/*
+		* Iterate address by address, checking complementarity on each
+		* consecutive byte pair.
 		*/
 		uint8 inst_src;
 		uint8 inst_comp;
 
-		/* If complement head moves to an invalid address, complementarity
-		fails.
+		/*
+		* If complement head moves to an invalid address, complementarity
+		* fails.
 		*/
 		if (!sal_mem_is_address_valid(complement)) {
 			return FALSE;
@@ -514,18 +555,20 @@ static boolean are_templates_complements(uint32 source, uint32 complement)
 		complement++;
 	}
 
-	/* If we get to the end of a template in the source head, and target has
-	been complementary all the way through, we consider these blocks of memory
-	'complements'.
+	/*
+	* If we get to the end of a template in the source head, and target has
+	* been complementary all the way through, we consider these blocks of
+	* memory 'complements'.
 	*/
 	return TRUE;
 }
 
 static void increment_sp(uint32 pidx, boolean forward)
 {
-	/* Increment or decrement SP to the next valid address. This function gets
-	called by organisms during jumps, searches, etc. (i.e. whenever the seeker
-	pointer gets sent on a 'mission').
+	/*
+	* Increment or decrement SP to the next valid address. This function gets
+	* called by organisms during jumps, searches, etc. (i.e. whenever the
+	* seeker pointer gets sent on a 'mission').
 	*/
 	assert(g_is_init);
 	assert(pidx < g_capacity);
@@ -542,11 +585,12 @@ static void increment_sp(uint32 pidx, boolean forward)
 
 static boolean jump_seek(uint32 pidx, boolean forward)
 {
-	/* Search (via the seeker pointer) for template to jump into. This gets
-	called by organisms each cycle during a JMP instruction. Only when a valid
-	template is found, will this function return TRUE. Otherwise it will return
-	FALSE, signaling the calling process that a template has not yet been
-	found.
+	/*
+	* Search (via the seeker pointer) for template to jump into. This gets
+	* called by organisms each cycle during a JMP instruction. Only when a
+	* valid template is found, will this function return TRUE. Otherwise it
+	* will return FALSE, signaling the calling process that a template has not
+	* yet been found.
 	*/
 	uint32 next_addr;
 	uint8 next_inst;
@@ -555,8 +599,9 @@ static boolean jump_seek(uint32 pidx, boolean forward)
 	assert(!sal_proc_is_free(pidx));
 	next_addr = g_procs[pidx].ip + 1;
 
-	/* This function causes a 'fault' when there is no template right in front
-	of the caller organism's instruction pointer.
+	/*
+	* This function causes a 'fault' when there is no template right in front
+	* of the caller organism's instruction pointer.
 	*/
 	if (!sal_mem_is_address_valid(next_addr)) {
 		on_fault(pidx);
@@ -572,8 +617,9 @@ static boolean jump_seek(uint32 pidx, boolean forward)
 		return FALSE;
 	}
 
-	/* Check for complementarity. Increment seeker pointer if template has not
-	been found yet.
+	/*
+	* Check for complementarity. Increment seeker pointer if template has not
+	* been found yet.
 	*/
 	if (are_templates_complements(next_addr, g_procs[pidx].sp)) {
 		return TRUE;
@@ -585,9 +631,10 @@ static boolean jump_seek(uint32 pidx, boolean forward)
 
 static void jump(uint32 pidx)
 {
-	/* This gets called when an organism has finally found a template to jump
-	into (see function above). Only when in debug mode, we make sure that the
-	entire jump operation has been performed in a valid way.
+	/*
+	* This gets called when an organism has finally found a template to jump
+	* into (see function above). Only when in debug mode, we make sure that the
+	* entire jump operation has been performed in a valid way.
 	*/
 	#ifndef NDEBUG
 		uint32 next_addr;
@@ -610,11 +657,13 @@ static void jump(uint32 pidx)
 
 static boolean addr_seek(uint32 pidx, boolean forward)
 {
-	/* Search (via the seeker pointer) for template address in memory. This
-	gets called by organisms each cycle during a ADR instruction. Only when a
-	valid template is found, will this function return TRUE. Otherwise it will
-	return FALSE, signaling the calling process that a template has not yet
-	been found. */
+	/*
+	* Search (via the seeker pointer) for template address in memory. This
+	* gets called by organisms each cycle during a ADR instruction. Only when a
+	* valid template is found, will this function return TRUE. Otherwise it
+	* will return FALSE, signaling the calling process that a template has not
+	* yet been found.
+	*/
 	uint32 next1_addr;
 	uint32 next2_addr;
 	uint8 next1_inst;
@@ -625,12 +674,15 @@ static boolean addr_seek(uint32 pidx, boolean forward)
 	next1_addr = g_procs[pidx].ip + 1;
 	next2_addr = g_procs[pidx].ip + 2;
 
-	/* This function causes a 'fault' when there is no register modifier right
-	in front of the caller organism's instruction pointer, and a template just
-	after that.
+	/*
+	* This function causes a 'fault' when there is no register modifier right
+	* in front of the caller organism's instruction pointer, and a template
+	* just after that.
 	*/
-	if (!sal_mem_is_address_valid(next1_addr) ||
-			!sal_mem_is_address_valid(next2_addr)) {
+	if (
+		!sal_mem_is_address_valid(next1_addr) ||
+		!sal_mem_is_address_valid(next2_addr)
+	) {
 		on_fault(pidx);
 		increment_ip(pidx);
 		return FALSE;
@@ -645,8 +697,9 @@ static boolean addr_seek(uint32 pidx, boolean forward)
 		return FALSE;
 	}
 
-	/* Check for complementarity. Increment seeker pointer if template has not
-	been found yet.
+	/*
+	* Check for complementarity. Increment seeker pointer if template has not
+	* been found yet.
 	*/
 	if (are_templates_complements(next2_addr, g_procs[pidx].sp)) {
 		return TRUE;
@@ -656,12 +709,13 @@ static boolean addr_seek(uint32 pidx, boolean forward)
 	return FALSE;
 }
 
-static boolean get_register_pointers(uint32 pidx, uint32_p *regs,
-	uint32 reg_count)
-{
-	/* This function is used to get pointers to a calling organism registers.
-	Specifically, registers returned are those that will be used when executing
-	the caller organism's current instruction.
+static boolean get_register_pointers(
+	uint32 pidx, uint32_p *regs, uint32 reg_count
+) {
+	/*
+	* This function is used to get pointers to a calling organism registers.
+	* Specifically, registers returned are those that will be used when
+	* executing the caller organism's current instruction.
 	*/
 	uint32 ridx;
 	assert(g_is_init);
@@ -671,15 +725,18 @@ static boolean get_register_pointers(uint32 pidx, uint32_p *regs,
 	assert(reg_count);
 	assert(reg_count < 4);
 
-	/* Iterate 'reg_count' number of instructions forward from the IP, noting
-	down all found register modifiers. If less than 'reg_count' modifiers are
-	found, this function returns FALSE (triggering a 'fault').
+	/*
+	* Iterate 'reg_count' number of instructions forward from the IP, noting
+	* down all found register modifiers. If less than 'reg_count' modifiers are
+	* found, this function returns FALSE (triggering a 'fault').
 	*/
 	for (ridx = 0; ridx < reg_count; ridx++) {
 		uint32 mod_addr = g_procs[pidx].ip + 1 + ridx;
 
-		if (!sal_mem_is_address_valid(mod_addr) ||
-				!sal_is_mod(sal_mem_get_inst(mod_addr))) {
+		if (
+			!sal_mem_is_address_valid(mod_addr) ||
+			!sal_is_mod(sal_mem_get_inst(mod_addr))
+		) {
 			return FALSE;
 		}
 
@@ -704,9 +761,10 @@ static boolean get_register_pointers(uint32 pidx, uint32_p *regs,
 
 static void addr(uint32 pidx)
 {
-	/* This gets called when an organism has finally found a template and is
-	ready to store its address. Only when in debug mode, we make sure that the
-	entire search operation has been performed in a valid way.
+	/*
+	* This gets called when an organism has finally found a template and is
+	* ready to store its address. Only when in debug mode, we make sure that
+	* the entire search operation has been performed in a valid way.
 	*/
 	uint32_p reg;
 
@@ -726,7 +784,8 @@ static void addr(uint32 pidx)
 		assert(are_templates_complements(next2_addr, g_procs[pidx].sp));
 	#endif
 
-	/* Store address of complement into the given register.
+	/*
+	* Store address of complement into the given register.
 	*/
 	if (!get_register_pointers(pidx, &reg, 1)) {
 		on_fault(pidx);
@@ -740,7 +799,8 @@ static void addr(uint32 pidx)
 
 static void free_child_block_of(uint32 pidx)
 {
-	/* Free only the 'child' memory block (mb2) of the caller organism.
+	/*
+	* Free only the 'child' memory block (mb2) of the caller organism.
 	*/
 	assert(g_is_init);
 	assert(pidx < g_capacity);
@@ -753,11 +813,12 @@ static void free_child_block_of(uint32 pidx)
 
 static void alloc(uint32 pidx, boolean forward)
 {
-	/* Allocate a 'child' memory block of size stored in the first given
-	register, and save its address into the second given register. This
-	function is the basis of Salisian reproduction. It's a fairly complicated
-	function (as the seeker pointer must function in a procedural way), so it's
-	divided into a series of steps, documented below.
+	/*
+	* Allocate a 'child' memory block of size stored in the first given
+	* register, and save its address into the second given register. This
+	* function is the basis of Salisian reproduction. It's a fairly complicated
+	* function (as the seeker pointer must function in a procedural way), so
+	* it's divided into a series of steps, documented below.
 	*/
 	uint32_p regs[2];
 	uint32 block_size;
@@ -765,9 +826,10 @@ static void alloc(uint32 pidx, boolean forward)
 	assert(pidx < g_capacity);
 	assert(!sal_proc_is_free(pidx));
 
-	/* For this function to work, we need at least two register modifiers.
-	Then, we check for all possible error conditions. If any error conditions
-	are found, the instruction faults and returns.
+	/*
+	* For this function to work, we need at least two register modifiers.
+	* Then, we check for all possible error conditions. If any error conditions
+	* are found, the instruction faults and returns.
 	*/
 	if (!get_register_pointers(pidx, regs, 2)) {
 		on_fault(pidx);
@@ -777,7 +839,8 @@ static void alloc(uint32 pidx, boolean forward)
 
 	block_size = *regs[0];
 
-	/* ERROR 1: requested child block is of size zero.
+	/*
+	* ERROR 1: requested child block is of size zero.
 	*/
 	if (!block_size) {
 		on_fault(pidx);
@@ -785,7 +848,8 @@ static void alloc(uint32 pidx, boolean forward)
 		return;
 	}
 
-	/* ERROR 2: seeker pointer not adjacent to existing child block.
+	/*
+	* ERROR 2: seeker pointer not adjacent to existing child block.
 	*/
 	if (g_procs[pidx].mb2s) {
 		uint32 exp_addr;
@@ -803,7 +867,8 @@ static void alloc(uint32 pidx, boolean forward)
 		}
 	}
 
-	/* No errors were detected. We thus handle all correct conditions.
+	/*
+	* No errors were detected. We thus handle all correct conditions.
 	* CONDITION 1: allocation was successful.
 	*/
 	if (g_procs[pidx].mb2s == block_size) {
@@ -812,8 +877,9 @@ static void alloc(uint32 pidx, boolean forward)
 		return;
 	}
 
-	/* CONDITION 2: seeker pointer has collided with allocated space. We free
-	child memory block and just continue searching.
+	/*
+	* CONDITION 2: seeker pointer has collided with allocated space. We free
+	* child memory block and just continue searching.
 	*/
 	if (sal_mem_is_allocated(g_procs[pidx].sp)) {
 		if (g_procs[pidx].mb2s) {
@@ -824,8 +890,9 @@ static void alloc(uint32 pidx, boolean forward)
 		return;
 	}
 
-	/* CONDITION 3: no collision detected; enlarge child memory block and
-	increment seeker pointer.
+	/*
+	* CONDITION 3: no collision detected; enlarge child memory block and
+	* increment seeker pointer.
 	*/
 	_sal_mem_set_allocated(g_procs[pidx].sp);
 
@@ -839,8 +906,9 @@ static void alloc(uint32 pidx, boolean forward)
 
 static void swap(uint32 pidx)
 {
-	/* Swap parent and child memory blocks. This function is the basis of
-	Salisian metabolism.
+	/*
+	* Swap parent and child memory blocks. This function is the basis of
+	* Salisian metabolism.
 	*/
 	assert(g_is_init);
 	assert(pidx < g_capacity);
@@ -862,7 +930,8 @@ static void swap(uint32 pidx)
 
 static void split(uint32 pidx)
 {
-	/* Split child memory block into a new organism. A new baby is born. :-)
+	/*
+	* Split child memory block into a new organism. A new baby is born. :-)
 	*/
 	assert(g_is_init);
 	assert(pidx < g_capacity);
@@ -881,9 +950,10 @@ static void split(uint32 pidx)
 
 static void one_reg_op(uint32 pidx, uint8 inst)
 {
-	/* Here we group all 1-register operations. These include incrementing,
-	decrementing, placing zero or one on a register, and the negation
-	operation.
+	/*
+	* Here we group all 1-register operations. These include incrementing,
+	* decrementing, placing zero or one on a register, and the negation
+	* operation.
 	*/
 	uint32_p reg;
 	assert(g_is_init);
@@ -928,9 +998,10 @@ static void one_reg_op(uint32 pidx, uint8 inst)
 
 static void if_not_zero(uint32 pidx)
 {
-	/* Conditional operator. Like in most programming languages, this
-	instruction is needed to allow organism execution to branch into different
-	execution streams.
+	/*
+	* Conditional operator. Like in most programming languages, this
+	* instruction is needed to allow organism execution to branch into
+	* different execution streams.
 	*/
 	uint32_p reg;
 	assert(g_is_init);
@@ -953,8 +1024,9 @@ static void if_not_zero(uint32 pidx)
 
 static void three_reg_op(uint32 pidx, uint8 inst)
 {
-	/* Here we group all 3-register arithmetic operations. These include
-	addition, subtraction, multiplication and division.
+	/*
+	* Here we group all 3-register arithmetic operations. These include
+	* addition, subtraction, multiplication and division.
 	*/
 	uint32_p regs[3];
 	assert(g_is_init);
@@ -979,7 +1051,9 @@ static void three_reg_op(uint32 pidx, uint8 inst)
 		*regs[0] = *regs[1] * *regs[2];
 		break;
 	case DIVN:
-		/* Division by 0 is not allowed and causes a fault. */
+		/*
+		* Division by 0 is not allowed and causes a fault.
+		*/
 		if (!(*regs[2])) {
 			on_fault(pidx);
 			increment_ip(pidx);
@@ -997,16 +1071,19 @@ static void three_reg_op(uint32 pidx, uint8 inst)
 
 static void load(uint32 pidx)
 {
-	/* Load an instruction from a given address into a specified register. This
-	is used by organisms during their reproduction cycle.
+	/*
+	* Load an instruction from a given address into a specified register. This
+	* is used by organisms during their reproduction cycle.
 	*/
 	uint32_p regs[2];
 	assert(g_is_init);
 	assert(pidx < g_capacity);
 	assert(!sal_proc_is_free(pidx));
 
-	if (!get_register_pointers(pidx, regs, 2) ||
-			!sal_mem_is_address_valid(*regs[0])) {
+	if (
+		!get_register_pointers(pidx, regs, 2) ||
+		!sal_mem_is_address_valid(*regs[0])
+	) {
 		on_fault(pidx);
 		increment_ip(pidx);
 		return;
@@ -1024,9 +1101,10 @@ static void load(uint32 pidx)
 
 static boolean is_writeable_by(uint32 pidx, uint32 address)
 {
-	/* Check whether an organisms has writing rights on a specified address.
-	Any organism may write to any valid address that is either self owned or
-	not allocated.
+	/*
+	* Check whether an organisms has writing rights on a specified address.
+	* Any organism may write to any valid address that is either self owned or
+	* not allocated.
 	*/
 	assert(g_is_init);
 	assert(pidx < g_capacity);
@@ -1040,23 +1118,28 @@ static boolean is_writeable_by(uint32 pidx, uint32 address)
 		uint32 lo2 = g_procs[pidx].mb2a;
 		uint32 hi1 = lo1 + g_procs[pidx].mb1s;
 		uint32 hi2 = lo2 + g_procs[pidx].mb2s;
-		return ((address >= lo1 && address < hi1) ||
-			(address >= lo2 && address < hi2));
+		return (
+			(address >= lo1 && address < hi1) ||
+			(address >= lo2 && address < hi2)
+		);
 	}
 }
 
 static void write(uint32 pidx)
 {
-	/* Write instruction on a given register into a specified address. This is
-	used by organisms during their reproduction cycle.
+	/*
+	* Write instruction on a given register into a specified address. This is
+	* used by organisms during their reproduction cycle.
 	*/
 	uint32_p regs[2];
 	assert(g_is_init);
 	assert(pidx < g_capacity);
 	assert(!sal_proc_is_free(pidx));
 
-	if (!get_register_pointers(pidx, regs, 2) ||
-			!sal_mem_is_address_valid(*regs[0]) || !sal_is_inst(*regs[1])) {
+	if (
+		!get_register_pointers(pidx, regs, 2) ||
+		!sal_mem_is_address_valid(*regs[0]) || !sal_is_inst(*regs[1])
+	) {
 		on_fault(pidx);
 		increment_ip(pidx);
 		return;
@@ -1077,7 +1160,8 @@ static void write(uint32 pidx)
 
 static void send(uint32 pidx)
 {
-	/* Send instruction on given register into the common sender.
+	/*
+	* Send instruction on given register into the common sender.
 	*/
 	uint32_p reg;
 	assert(g_is_init);
@@ -1102,9 +1186,10 @@ static void send(uint32 pidx)
 
 static void receive(uint32 pidx)
 {
-	/* Receive a single instruction from the common receiver and store it into
-	a specified register. In case the receiver is unset, it will return the
-	NOP0 instruction.
+	/*
+	* Receive a single instruction from the common receiver and store it into
+	* a specified register. In case the receiver is unset, it will return the
+	* NOP0 instruction.
 	*/
 	uint32_p reg;
 	assert(g_is_init);
@@ -1124,8 +1209,9 @@ static void receive(uint32 pidx)
 
 static void push(uint32 pidx)
 {
-	/* Push value on register into the stack. This is useful as a secondary
-	memory resource.
+	/*
+	* Push value on register into the stack. This is useful as a secondary
+	* memory resource.
 	*/
 	uint32_p reg;
 	uint32 sidx;
@@ -1149,7 +1235,8 @@ static void push(uint32 pidx)
 
 static void pop(uint32 pidx)
 {
-	/* Pop value from the stack into a given register.
+	/*
+	* Pop value from the stack into a given register.
 	*/
 	uint32_p reg;
 	uint32 sidx;
@@ -1175,8 +1262,9 @@ static void pop(uint32 pidx)
 
 static void proc_cycle(uint32 pidx)
 {
-	/* Cycle a process once. Organisms will always execute one instruction per
-	simulation cycle.
+	/*
+	* Cycle a process once. Organisms will always execute one instruction per
+	* simulation cycle.
 	*/
 	uint8 inst;
 	assert(g_is_init);
@@ -1252,16 +1340,18 @@ static void proc_cycle(uint32 pidx)
 
 void _sal_proc_cycle(void)
 {
-	/* The process module cycle consists of a series of steps, which are needed
-	to preserve overall correctness.
+	/*
+	* The process module cycle consists of a series of steps, which are needed
+	* to preserve overall correctness.
 	*/
 	assert(g_is_init);
 	assert(module_is_valid());
 
-	/* Iterate through all organisms in the reaper queue. First organism to
-	execute is the one pointed to by 'g_last' (the one on top of the queue).
-	Last one to execute is 'g_first'. We go around the circular queue, making
-	sure to modulo (%) around when iterator goes below zero.
+	/*
+	* Iterate through all organisms in the reaper queue. First organism to
+	* execute is the one pointed to by 'g_last' (the one on top of the queue).
+	* Last one to execute is 'g_first'. We go around the circular queue, making
+	* sure to modulo (%) around when iterator goes below zero.
 	*/
 	if (g_count) {
 		uint32 pidx = g_last;
@@ -1273,7 +1363,8 @@ void _sal_proc_cycle(void)
 			proc_cycle(pidx);
 		}
 
-		/* Kill oldest processes whenever memory gets filled over capacity.
+		/*
+		* Kill oldest processes whenever memory gets filled over capacity.
 		*/
 		while (sal_mem_get_allocated() > sal_mem_get_capacity()) {
 			proc_kill();
