@@ -58,11 +58,11 @@ an organism performs an invalid instruction it is considered a *fault*.
 - Swapping or splitting when not owning 2 memory blocks
 - Dividing by zero
 
-### The Common Pipe
-The common pipe is a mechanism through which different SALIS simulations can
-communicate. This is done via a FIFO file object that gets instantiated
-whenever a Salis simulation is running. Organisms can push or pull instructions
-to/from this common pipe via the SEND/RCVE instructions.
+### The Common Sender and Receiver
+Common sender and receiver are special functors through which SALIS simulations
+can communicate. Organisms can push or pull instructions via these functions,
+which must be provided by the wrapper application. With some configuration,
+genetic data may easily travel through a local or wide area network.
 
 ### Instruction set
 |Name |Symbol |Arguments |Description |
@@ -95,8 +95,8 @@ to/from this common pipe via the SEND/RCVE instructions.
 |`DIVN` |`/` |3 |Divide two registers |
 |`LOAD` |`L` |2 |Load instruction from memory |
 |`WRTE` |`W` |2 |Write instruction into memory |
-|`SEND` |`S` |1 |Send instruction to common pipe |
-|`RECV` |`R` |1 |Receive instruction from common pipe |
+|`SEND` |`S` |1 |Send instruction to common sender |
+|`RECV` |`R` |1 |Receive instruction from common receiver |
 |`PSHN` |`#` |1 |Push value to stack |
 |`POPN` |`~` |1 |Pop value from stack |
 
@@ -136,7 +136,7 @@ Look at README file inside the `./bin` directory for a full list of commands.
 ### New features on Salis-2.0
 - Tierran templates are now used instead of keys/lock pairs
 - The instruction set is shorter
-- Organisms can send/receive instructions to/from a common pipe
+- Organisms can send/receive instructions through the network
 
 ### Python integration
 - Salis controller/viewer is now written in python 3
