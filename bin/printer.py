@@ -20,6 +20,8 @@ from world import World
 
 
 class Printer:
+	ESCAPE_KEY = 27
+
 	def __init__(self, sim):
 		""" Printer constructor. It takes care of starting up curses, defining
 		the data pages and setting the printer on its initial state.
@@ -248,7 +250,7 @@ class Printer:
 				self.screen.move(self.__curs_y, self.__curs_x)
 				cmd = self.screen.getch()
 
-				if cmd in [ord("c"), curses.KEY_RESIZE, Handler.ESCAPE_KEY]:
+				if cmd in [ord("c"), curses.KEY_RESIZE, self.ESCAPE_KEY]:
 					self.on_resize()
 					break
 				elif cmd == curses.KEY_LEFT:
@@ -305,7 +307,7 @@ class Printer:
 		def validator(cmd):
 			EXIT = 7
 
-			if cmd in [curses.KEY_RESIZE, Handler.ESCAPE_KEY]:
+			if cmd in [curses.KEY_RESIZE, self.ESCAPE_KEY]:
 				console.clear()
 				return EXIT
 			elif cmd == curses.KEY_UP:
