@@ -32,7 +32,7 @@ $ ./bin/salis.py load --file 16.sim
 |`k`              |Scroll/go to selected (PROCESS and WORLD page) |
 |`X`              |Toggle hex/decimal value printing |
 |`M`              |Toggle minimal mode |
-|Numbers `[1..0]` |Cycle simulation `2^((n-1) % 10)` steps |
+|Numbers `[1..0]` |Cycle simulation `2^((n-1) % 10)` steps (max) |
 |Enter            |Activate cursor (WORLD page) |
 |Escape           |Save and quit simulation |
 
