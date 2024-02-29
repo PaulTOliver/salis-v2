@@ -1,4 +1,7 @@
-## SALIS: Artificial Life Simulator (v2.0)
+# SALIS: Artificial Life Simulator (v2.0)
+
+![SALIS running simulation](sim.png)
+
 ### Overview
 SALIS is my newest artificial life project. Mainly a re-take on Tom Ray's
 TIERRA simulation, but with my very own set of tweaks. Having a grasp on TIERRA
