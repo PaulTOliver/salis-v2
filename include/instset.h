@@ -44,8 +44,8 @@ enum {
 	SALIS_INST DIVN, /**< / Divide two registers */
 	SALIS_INST LOAD, /**< L Load instruction from memory */
 	SALIS_INST WRTE, /**< W Write instruction into memory */
-	SALIS_INST SEND, /**< S Send instruction to common pipe */
-	SALIS_INST RECV, /**< R Receive instruction from common pipe */
+	SALIS_INST SEND, /**< S Send instruction to common sender */
+	SALIS_INST RECV, /**< R Receive instruction from common receiver */
 	SALIS_INST PSHN, /**< # Push value to stack */
 	SALIS_INST POPN  /**< ~ Pop value from stack */
 };
