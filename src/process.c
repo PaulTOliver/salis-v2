@@ -256,9 +256,9 @@ static uint32 get_new_proc_from_queue(uint32 queue_lock)
 	}
 }
 
-static void proc_create(uint32 address, uint32 size, uint32 queue_lock,
-	boolean allocate)
-{
+static void proc_create(
+	uint32 address, uint32 size, uint32 queue_lock, boolean allocate
+) {
 	/*
 	* Give birth to a new process! We must specify the address and size of the
 	* new organism.
@@ -709,9 +709,8 @@ static boolean addr_seek(uint32 pidx, boolean forward)
 	return FALSE;
 }
 
-static boolean get_register_pointers(
-	uint32 pidx, uint32_p *regs, uint32 reg_count
-) {
+static void get_register_pointers(uint32 pidx, uint32_p *regs, uint32 reg_count)
+{
 	/*
 	* This function is used to get pointers to a calling organism registers.
 	* Specifically, registers returned are those that will be used when
@@ -726,9 +725,18 @@ static boolean get_register_pointers(
 	assert(reg_count < 4);
 
 	/*
+	* Set all modifiers to the default register (rax). This increases
+	* robustness making instructions valid even when not enough modifiers are
+	* found.
+	*/
+	for (ridx = 0; ridx < reg_count; ridx++) {
+		regs[ridx] = &g_procs[pidx].rax;
+	}
+
+	/*
 	* Iterate 'reg_count' number of instructions forward from the IP, noting
 	* down all found register modifiers. If less than 'reg_count' modifiers are
-	* found, this function returns FALSE (triggering a 'fault').
+	* found, organism will use the default register (rax).
 	*/
 	for (ridx = 0; ridx < reg_count; ridx++) {
 		uint32 mod_addr = g_procs[pidx].ip + 1 + ridx;
@@ -737,7 +745,7 @@ static boolean get_register_pointers(
 			!sal_mem_is_address_valid(mod_addr) ||
 			!sal_is_mod(sal_mem_get_inst(mod_addr))
 		) {
-			return FALSE;
+			break;
 		}
 
 		switch (sal_mem_get_inst(mod_addr)) {
@@ -755,8 +763,6 @@ static boolean get_register_pointers(
 			break;
 		}
 	}
-
-	return TRUE;
 }
 
 static void addr(uint32 pidx)
@@ -787,12 +793,7 @@ static void addr(uint32 pidx)
 	/*
 	* Store address of complement into the given register.
 	*/
-	if (!get_register_pointers(pidx, &reg, 1)) {
-		on_fault(pidx);
-		increment_ip(pidx);
-		return;
-	}
-
+	get_register_pointers(pidx, &reg, 1);
 	*reg = g_procs[pidx].sp;
 	increment_ip(pidx);
 }
@@ -827,16 +828,11 @@ static void alloc(uint32 pidx, boolean forward)
 	assert(!sal_proc_is_free(pidx));
 
 	/*
-	* For this function to work, we need at least two register modifiers.
-	* Then, we check for all possible error conditions. If any error conditions
-	* are found, the instruction faults and returns.
+	* Get two register modifiers. Then, we check for all possible error
+	* conditions. If any error conditions are found, the instruction faults and
+	* returns.
 	*/
-	if (!get_register_pointers(pidx, regs, 2)) {
-		on_fault(pidx);
-		increment_ip(pidx);
-		return;
-	}
-
+	get_register_pointers(pidx, regs, 2);
 	block_size = *regs[0];
 
 	/*
@@ -960,12 +956,7 @@ static void one_reg_op(uint32 pidx, uint8 inst)
 	assert(pidx < g_capacity);
 	assert(!sal_proc_is_free(pidx));
 	assert(sal_is_inst(inst));
-
-	if (!get_register_pointers(pidx, &reg, 1)) {
-		on_fault(pidx);
-		increment_ip(pidx);
-		return;
-	}
+	get_register_pointers(pidx, &reg, 1);
 
 	switch (inst) {
 	case INCN:
@@ -1007,12 +998,7 @@ static void if_not_zero(uint32 pidx)
 	assert(g_is_init);
 	assert(pidx < g_capacity);
 	assert(!sal_proc_is_free(pidx));
-
-	if (!get_register_pointers(pidx, &reg, 1)) {
-		on_fault(pidx);
-		increment_ip(pidx);
-		return;
-	}
+	get_register_pointers(pidx, &reg, 1);
 
 	if (!(*reg)) {
 		increment_ip(pidx);
@@ -1033,12 +1019,7 @@ static void three_reg_op(uint32 pidx, uint8 inst)
 	assert(pidx < g_capacity);
 	assert(!sal_proc_is_free(pidx));
 	assert(sal_is_inst(inst));
-
-	if (!get_register_pointers(pidx, regs, 3)) {
-		on_fault(pidx);
-		increment_ip(pidx);
-		return;
-	}
+	get_register_pointers(pidx, regs, 3);
 
 	switch (inst) {
 	case SUMN:
@@ -1079,11 +1060,9 @@ static void load(uint32 pidx)
 	assert(g_is_init);
 	assert(pidx < g_capacity);
 	assert(!sal_proc_is_free(pidx));
+	get_register_pointers(pidx, regs, 2);
 
-	if (
-		!get_register_pointers(pidx, regs, 2) ||
-		!sal_mem_is_address_valid(*regs[0])
-	) {
+	if (!sal_mem_is_address_valid(*regs[0])) {
 		on_fault(pidx);
 		increment_ip(pidx);
 		return;
@@ -1135,11 +1114,9 @@ static void write(uint32 pidx)
 	assert(g_is_init);
 	assert(pidx < g_capacity);
 	assert(!sal_proc_is_free(pidx));
+	get_register_pointers(pidx, regs, 2);
 
-	if (
-		!get_register_pointers(pidx, regs, 2) ||
-		!sal_mem_is_address_valid(*regs[0]) || !sal_is_inst(*regs[1])
-	) {
+	if (!sal_mem_is_address_valid(*regs[0]) || !sal_is_inst(*regs[1])) {
 		on_fault(pidx);
 		increment_ip(pidx);
 		return;
@@ -1167,12 +1144,7 @@ static void send(uint32 pidx)
 	assert(g_is_init);
 	assert(pidx < g_capacity);
 	assert(!sal_proc_is_free(pidx));
-
-	if (!get_register_pointers(pidx, &reg, 1)) {
-		on_fault(pidx);
-		increment_ip(pidx);
-		return;
-	}
+	get_register_pointers(pidx, &reg, 1);
 
 	if (!sal_is_inst(*reg)) {
 		on_fault(pidx);
@@ -1195,13 +1167,7 @@ static void receive(uint32 pidx)
 	assert(g_is_init);
 	assert(pidx < g_capacity);
 	assert(!sal_proc_is_free(pidx));
-
-	if (!get_register_pointers(pidx, &reg, 1)) {
-		on_fault(pidx);
-		increment_ip(pidx);
-		return;
-	}
-
+	get_register_pointers(pidx, &reg, 1);
 	*reg = _sal_comm_receive();
 	assert(sal_is_inst(*reg));
 	increment_ip(pidx);
@@ -1218,12 +1184,7 @@ static void push(uint32 pidx)
 	assert(g_is_init);
 	assert(pidx < g_capacity);
 	assert(!sal_proc_is_free(pidx));
-
-	if (!get_register_pointers(pidx, &reg, 1)) {
-		on_fault(pidx);
-		increment_ip(pidx);
-		return;
-	}
+	get_register_pointers(pidx, &reg, 1);
 
 	for (sidx = 7; sidx; sidx--) {
 		g_procs[pidx].stack[sidx] = g_procs[pidx].stack[sidx - 1];
@@ -1243,13 +1204,7 @@ static void pop(uint32 pidx)
 	assert(g_is_init);
 	assert(pidx < g_capacity);
 	assert(!sal_proc_is_free(pidx));
-
-	if (!get_register_pointers(pidx, &reg, 1)) {
-		on_fault(pidx);
-		increment_ip(pidx);
-		return;
-	}
-
+	get_register_pointers(pidx, &reg, 1);
 	*reg = g_procs[pidx].stack[0];
 
 	for (sidx = 1; sidx < 8; sidx++) {
